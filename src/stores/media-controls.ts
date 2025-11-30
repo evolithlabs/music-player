@@ -1,0 +1,140 @@
+import { CapacitorMusicControls } from 'capacitor-music-controls-plugin';
+import { defineStore, acceptHMRUpdate } from 'pinia';
+import { useMediaPlayerStore } from './media-player';
+import type { MediaControlOptions, MediaControlsEvent } from 'src/types/media-controls';
+
+export const useMediaControlsStore = defineStore('media-controls', () => {
+  const mediaPlayer = useMediaPlayerStore();
+
+  const defaultMediaControlOptions: MediaControlOptions = {
+    hasPrev: false,
+    hasNext: false,
+    hasClose: true,
+    elapsed: 0,
+    hasSkipForward: true,
+    hasSkipBackward: true,
+    skipForwardInterval: 15,
+    skipBackwardInterval: 15,
+    hasScrubbing: false,
+    dismissable: true,
+    ticker: '',
+    playIcon: 'media_play',
+    pauseIcon: 'media_pause',
+    prevIcon: 'media_prev',
+    nextIcon: 'media_next',
+    closeIcon: 'media_close',
+    notificationIcon: 'notification',
+  };
+
+  const init = async (options: MediaControlOptions) => {
+    const mergedOptions = {
+      ...defaultMediaControlOptions,
+      ...options, // user overrides defaults
+    };
+
+    await CapacitorMusicControls.create(mergedOptions)
+      .then(() => {
+        console.log('Music controls created');
+        // Android listener - different from iOS
+        document.addEventListener('controlsNotification', (event) => {
+          const customEvent = event as MediaControlsEvent;
+
+          // Call async function, handle errors, but do NOT await
+          executeAction(customEvent).catch((err) => {
+            console.error('Error executing action:', err);
+          });
+        });
+      })
+      .catch((e) => {
+        console.error('Error while initing music controls', e);
+      });
+  };
+
+  const updateMetadata = async (options: MediaControlOptions) => {
+    const mergedOptions = {
+      ...defaultMediaControlOptions,
+      ...options, // user overrides defaults
+    };
+
+    await CapacitorMusicControls.updateMetadata(mergedOptions)
+      .then(() => {
+        console.log('Music controls metadata updated');
+      })
+      .catch((e) => {
+        console.error('Error while initing music controls', e);
+      });
+  };
+
+  const executeAction = async (event: MediaControlsEvent) => {
+    console.log('executing action from media controls:', event.message, event.position);
+    switch (event.message) {
+      case 'music-controls-next':
+        // next
+        break;
+      case 'music-controls-previous':
+        // previous
+        break;
+      case 'music-controls-pause':
+        // paused
+        mediaPlayer.pause();
+        CapacitorMusicControls.updateElapsed({
+          elapsed: (mediaPlayer.audio.currentTime ?? 0) * 1000,
+          isPlaying: false,
+        });
+        break;
+      case 'music-controls-play':
+        // resumed
+        await mediaPlayer.play();
+        CapacitorMusicControls.updateElapsed({
+          elapsed: (mediaPlayer.audio.currentTime ?? 0) * 1000,
+          isPlaying: true,
+        });
+        break;
+      case 'music-controls-destroy':
+        // controls were destroyed
+        break;
+
+      // External controls (iOS only)
+      case 'music-controls-toggle-play-pause':
+        // do something
+        await mediaPlayer.toggle();
+        break;
+      case 'music-controls-seek-to':
+        mediaPlayer.seekTo(event.position / 1000);
+        await mediaPlayer.play();
+        CapacitorMusicControls.updateElapsed({
+          elapsed: event.position,
+          isPlaying: true,
+        });
+        // do something
+        break;
+      case 'music-controls-skip-forward':
+        // Do something
+        break;
+      case 'music-controls-skip-backward':
+        // Do something
+        break;
+
+      // Headset events (Android only)
+      // All media button events are listed below
+      case 'music-controls-media-button':
+        // Do something
+        break;
+      case 'music-controls-headset-unplugged':
+        // Do something
+        break;
+      case 'music-controls-headset-plugged':
+        // Do something
+        break;
+      default:
+        console.log('Unhandled action', event.message);
+        break;
+    }
+  };
+
+  return { init, updateMetadata };
+});
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useMediaControlsStore, import.meta.hot));
+}

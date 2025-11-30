@@ -1,0 +1,15 @@
+{
+  "name": "groovio-music",
+  "version": "0.0.1",
+  "description": "Music Player",
+  "author": "DaniZGit <danzaric10@gmail.com>",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "capacitor-mediastore": "link:..\\..\\capacitor-plugins\\capacitor-mediastore",
+    "capacitor-music-controls-plugin": "github:DaniZGit/capacitor-music-controls-plugin-fork"
+  }
+}
