@@ -12,14 +12,12 @@ export const useMediaPlayerStore = defineStore('media-player', () => {
     currentTrack.value = track;
     audio.src = Capacitor.convertFileSrc(track.path);
     audio.load();
-    console.log('Loaded track:', currentTrack.value.name, currentTrack.value.path);
   };
 
   const play = async () => {
     if (!currentTrack.value) return;
     await audio.play();
     isPlaying.value = true;
-    console.log('Playing track:', currentTrack.value.name);
   };
 
   const pause = () => {

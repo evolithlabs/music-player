@@ -1,7 +1,8 @@
 <template>
   <q-page class="row items-center justify-evenly">
     <div v-for="track in mediaLibraryStore.tracks" :key="track.path" class="column items-center">
-      <h6>{{ track.name }}</h6>
+      <h6>{{ track.title }}</h6>
+      <pre>{{ Object.keys(track) }}</pre>
       <button @click="playAudio(track)">Play</button>
     </div>
   </q-page>
@@ -24,10 +25,12 @@ onMounted(async () => {
 
   // Initialize media controls with the current track info
   await mediaControlsStore.init({
-    track: mediaPlayerStore.currentTrack?.name ?? 'Unknown Track',
+    track: mediaPlayerStore.currentTrack?.title ?? 'Unknown Track',
     artist: mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist',
     album: mediaPlayerStore.currentTrack?.album ?? 'Unknown Album',
-    cover: '',
+    cover:
+      mediaPlayerStore.currentTrack?.coverPath ??
+      document.location.origin + '/images/background-cover.jpg',
     duration: mediaPlayerStore.currentTrack?.duration ?? 0,
     elapsed: 0,
     dismissable: false,
@@ -39,10 +42,10 @@ const playAudio = async (track: Track) => {
   mediaPlayerStore.load(track);
   await mediaPlayerStore.play();
   await mediaControlsStore.updateMetadata({
-    track: track.name,
+    track: track.title,
     artist: track.artist,
     album: track.album,
-    cover: '',
+    cover: track.coverPath,
     duration: track.duration,
     isPlaying: true,
   });
