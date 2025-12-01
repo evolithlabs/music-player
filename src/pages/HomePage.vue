@@ -2,7 +2,6 @@
   <q-page class="row items-center justify-evenly">
     <div v-for="track in mediaLibraryStore.tracks" :key="track.path" class="column items-center">
       <h6>{{ track.title }}</h6>
-      <pre>{{ Object.keys(track) }}</pre>
       <button @click="playAudio(track)">Play</button>
     </div>
   </q-page>

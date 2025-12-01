@@ -132,7 +132,7 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
     }
   };
 
-  return { init, updateMetadata };
+  return { init, updateMetadata, executeAction };
 });
 
 if (import.meta.hot) {
