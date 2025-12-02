@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { QAvatar, QBtn, QFooter, QSpinnerAudio } from 'quasar';
+import { QAvatar, QBtn, QFooter, QImg, QSpinnerAudio } from 'quasar';
 import FooterLink from '../FooterLink.vue';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import { Capacitor } from '@capacitor/core';
-import { CapacitorMusicControls } from 'capacitor-music-controls-plugin';
+import { useMediaControlsStore } from 'src/stores/media-controls';
 
 const mediaPlayerStore = useMediaPlayerStore();
+const mediaControlsStore = useMediaControlsStore();
+
 const leftLinks = [
   {
     title: 'Home',
@@ -15,7 +17,7 @@ const leftLinks = [
   {
     title: 'Library',
     icon: 'library_music',
-    to: '/',
+    to: '/library',
   },
 ];
 
@@ -34,11 +36,7 @@ const rightLinks = [
 
 const playPauseTrack = async () => {
   await mediaPlayerStore.toggle();
-  console.log('Toggling', mediaPlayerStore.isPlaying);
-  CapacitorMusicControls.updateElapsed({
-    elapsed: (mediaPlayerStore.audio.currentTime ?? 0) * 1000,
-    isPlaying: mediaPlayerStore.isPlaying,
-  });
+  mediaControlsStore.syncPlayState();
 };
 </script>
 
@@ -47,12 +45,15 @@ const playPauseTrack = async () => {
     <div class="column q-pa-sm bg-blue-10">
       <div class="row no-wrap items-center">
         <QAvatar rounded class="q-mr-md">
-          <img
+          <QImg
             :src="
               mediaPlayerStore.currentTrack?.coverPath
                 ? Capacitor.convertFileSrc(mediaPlayerStore.currentTrack?.coverPath)
                 : '/images/background-cover.jpg'
             "
+            position="cover"
+            ratio="1"
+            class="rounded-borders"
           />
         </QAvatar>
         <div class="column">
@@ -101,7 +102,13 @@ const playPauseTrack = async () => {
       </FooterLink>
 
       <div to="/" class="col text-center">
-        <QBtn icon="play_arrow" :loading="true" size="md" round>
+        <QBtn
+          icon="play_arrow"
+          :loading="mediaPlayerStore.isPlaying"
+          size="md"
+          round
+          @click="playPauseTrack"
+        >
           <template v-slot:loading>
             <QSpinnerAudio />
           </template>

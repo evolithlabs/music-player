@@ -4,7 +4,7 @@ import { useMediaPlayerStore } from './media-player';
 import type { MediaControlOptions, MediaControlsEvent } from 'src/types/media-controls';
 
 export const useMediaControlsStore = defineStore('media-controls', () => {
-  const mediaPlayer = useMediaPlayerStore();
+  const mediaPlayerStore = useMediaPlayerStore();
 
   const defaultMediaControlOptions: MediaControlOptions = {
     hasPrev: false,
@@ -65,6 +65,13 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
       });
   };
 
+  const syncPlayState = () => {
+    CapacitorMusicControls.updateElapsed({
+      elapsed: (mediaPlayerStore.audio.currentTime ?? 0) * 1000,
+      isPlaying: mediaPlayerStore.isPlaying,
+    });
+  };
+
   const executeAction = async (event: MediaControlsEvent) => {
     console.log('executing action from media controls:', event.message, event.position);
     switch (event.message) {
@@ -76,17 +83,17 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
         break;
       case 'music-controls-pause':
         // paused
-        mediaPlayer.pause();
+        mediaPlayerStore.pause();
         CapacitorMusicControls.updateElapsed({
-          elapsed: (mediaPlayer.audio.currentTime ?? 0) * 1000,
+          elapsed: (mediaPlayerStore.audio.currentTime ?? 0) * 1000,
           isPlaying: false,
         });
         break;
       case 'music-controls-play':
         // resumed
-        await mediaPlayer.play();
+        await mediaPlayerStore.play();
         CapacitorMusicControls.updateElapsed({
-          elapsed: (mediaPlayer.audio.currentTime ?? 0) * 1000,
+          elapsed: (mediaPlayerStore.audio.currentTime ?? 0) * 1000,
           isPlaying: true,
         });
         break;
@@ -97,11 +104,11 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
       // External controls (iOS only)
       case 'music-controls-toggle-play-pause':
         // do something
-        await mediaPlayer.toggle();
+        await mediaPlayerStore.toggle();
         break;
       case 'music-controls-seek-to':
-        mediaPlayer.seekTo(event.position / 1000);
-        await mediaPlayer.play();
+        mediaPlayerStore.seekTo(event.position / 1000);
+        await mediaPlayerStore.play();
         CapacitorMusicControls.updateElapsed({
           elapsed: event.position,
           isPlaying: true,
@@ -132,7 +139,7 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
     }
   };
 
-  return { init, updateMetadata, executeAction };
+  return { init, updateMetadata, syncPlayState, executeAction };
 });
 
 if (import.meta.hot) {

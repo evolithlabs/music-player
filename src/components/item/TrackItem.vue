@@ -3,7 +3,6 @@ import { QBtn, QImg } from 'quasar';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import type { Track } from 'src/types/tracks';
-import { CapacitorMusicControls } from 'capacitor-music-controls-plugin';
 import { Capacitor } from '@capacitor/core';
 
 const props = defineProps<Track>();
@@ -15,10 +14,7 @@ const playPauseTrack = async () => {
   if (mediaPlayerStore.currentTrack?.id == props.id) {
     // toggle play/pause
     await mediaPlayerStore.toggle();
-    CapacitorMusicControls.updateElapsed({
-      elapsed: (mediaPlayerStore.audio.currentTime ?? 0) * 1000,
-      isPlaying: mediaPlayerStore.isPlaying,
-    });
+    mediaControlsStore.syncPlayState();
   } else {
     // play a new track
     mediaPlayerStore.load(props);
@@ -37,10 +33,13 @@ const playPauseTrack = async () => {
 
 <template>
   <div class="row no-wrap items-center">
-    <QAvatar rounded class="q-mr-md">
+    <QAvatar class="q-mr-md">
       <QImg
         :src="Capacitor.convertFileSrc(coverPath) ?? '/images/background-cover.jpg'"
         width="64px"
+        position="cover"
+        ratio="1"
+        class="rounded-borders"
       />
     </QAvatar>
     <div class="column">

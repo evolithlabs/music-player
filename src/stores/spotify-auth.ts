@@ -1,12 +1,17 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import type { SpotifyAccessTokenResponse } from 'src/types/spotify';
 import { onMounted, onUnmounted, ref } from 'vue';
+import { sha256 as jsSha256 } from 'js-sha256';
+import { Capacitor } from '@capacitor/core';
 
 export const useSpotifyAuthStore = defineStore(
   'spotify-auth',
   () => {
     const clientId = '87fe66d473fe41a08cd883998c6b60e0';
-    const redirectUri = document.location.origin + '/';
+    const redirectUri =
+      Capacitor.getPlatform() == 'android'
+        ? 'org.capacitor.quasar.app://spotify-callback'
+        : document.location.origin + '/';
 
     const codeVerifier = ref<string>('');
     const accessToken = ref<string>();
@@ -21,22 +26,22 @@ export const useSpotifyAuthStore = defineStore(
       return values.reduce((acc, x) => acc + possible[x % possible.length], '');
     };
 
-    const sha256 = async (plain: string) => {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(plain);
-      return window.crypto.subtle.digest('SHA-256', data);
+    const sha256 = (plain: string): Uint8Array => {
+      // Use the 'array' method of js-sha256 to get the hash as a byte array
+      const hashBytes = jsSha256.array(plain);
+      return new Uint8Array(hashBytes);
     };
 
-    const base64encode = (input: ArrayBuffer) => {
-      return btoa(String.fromCharCode(...new Uint8Array(input)))
+    const base64encode = (input: Uint8Array) => {
+      return btoa(String.fromCharCode(...input))
         .replace(/=/g, '')
         .replace(/\+/g, '-')
         .replace(/\//g, '_');
     };
 
-    const authenticate = async () => {
+    const authenticate = () => {
       codeVerifier.value = generateRandomString(64);
-      const hashed = await sha256(codeVerifier.value);
+      const hashed = sha256(codeVerifier.value);
       const codeChallenge = base64encode(hashed);
 
       const scope = 'user-read-private user-read-email';

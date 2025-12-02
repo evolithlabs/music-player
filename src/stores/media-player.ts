@@ -3,42 +3,60 @@ import { ref } from 'vue';
 import type { Track } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 
-export const useMediaPlayerStore = defineStore('media-player', () => {
-  const audio = new Audio();
-  const currentTrack = ref<Track>();
-  const isPlaying = ref(false);
+export const useMediaPlayerStore = defineStore(
+  'media-player',
+  () => {
+    const audio = new Audio();
+    const currentTrack = ref<Track>();
+    const isPlaying = ref(false);
+    const elapsedTime = ref(0);
 
-  const load = (track: Track) => {
-    currentTrack.value = track;
-    audio.src = Capacitor.convertFileSrc(track.path);
-    audio.load();
-  };
+    const load = (track: Track) => {
+      currentTrack.value = track;
+      audio.src = Capacitor.convertFileSrc(track.path);
+      audio.load();
 
-  const play = async () => {
-    if (!currentTrack.value) return;
-    await audio.play();
-    isPlaying.value = true;
-  };
+      audio.onplay = () => (isPlaying.value = true);
+      audio.onpause = () => (isPlaying.value = false);
+      audio.onended = () => (isPlaying.value = false);
 
-  const pause = () => {
-    audio.pause();
-    isPlaying.value = false;
-  };
+      audio.ontimeupdate = () => {
+        elapsedTime.value = audio.currentTime;
+      };
+    };
 
-  const toggle = async () => {
-    if (isPlaying.value) {
-      pause();
-    } else {
-      await play();
-    }
-  };
+    const play = async () => {
+      if (!currentTrack.value) return;
+      await audio.play();
+      isPlaying.value = true;
+    };
 
-  const seekTo = (position: number) => {
-    audio.currentTime = position;
-  };
+    const pause = () => {
+      audio.pause();
+      isPlaying.value = false;
+    };
 
-  return { audio, currentTrack, isPlaying, load, play, pause, toggle, seekTo };
-});
+    const toggle = async () => {
+      if (isPlaying.value) {
+        pause();
+      } else {
+        await play();
+      }
+    };
+
+    const seekTo = (position: number) => {
+      audio.currentTime = position;
+    };
+
+    return { audio, currentTrack, isPlaying, elapsedTime, load, play, pause, toggle, seekTo };
+  },
+  {
+    persist: {
+      storage: localStorage,
+      omit: ['isPlaying'],
+    },
+  },
+);
 
 if (import.meta.hot) {
   import.meta.hot.accept(acceptHMRUpdate(useMediaPlayerStore, import.meta.hot));

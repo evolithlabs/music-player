@@ -8,9 +8,13 @@ const { to, icon } = defineProps<{
 </script>
 
 <template>
-  <RouterLink :to="to" class="content-center text-center text-white">
-    <QBtn :icon="icon" size="md" flat />
+  <RouterLink :to="to" class="link content-center text-center text-white">
+    <QBtn :icon="icon" size="md" flat round ripple />
   </RouterLink>
 </template>
 
-<style scoped></style>
+<style scoped>
+.link {
+  text-decoration: none;
+}
+</style>
