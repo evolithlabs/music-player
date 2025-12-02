@@ -35,8 +35,10 @@ const rightLinks = [
 ];
 
 const playPauseTrack = async () => {
-  await mediaPlayerStore.toggle();
-  mediaControlsStore.syncPlayState();
+  mediaControlsStore.executeAction({
+    message: 'music-controls-toggle-play-pause',
+    position: 0,
+  });
 };
 </script>
 

@@ -72,7 +72,9 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
     });
   };
 
-  const executeAction = async (event: MediaControlsEvent) => {
+  const executeAction = async (
+    event: MediaControlsEvent | { message: string; position: number },
+  ) => {
     console.log('executing action from media controls:', event.message, event.position);
     switch (event.message) {
       case 'music-controls-next':
@@ -103,8 +105,14 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
 
       // External controls (iOS only)
       case 'music-controls-toggle-play-pause':
-        // do something
+        // Update media player state
         await mediaPlayerStore.toggle();
+
+        // Update media controls state
+        CapacitorMusicControls.updateElapsed({
+          elapsed: (mediaPlayerStore.audio.currentTime ?? 0) * 1000,
+          isPlaying: mediaPlayerStore.isPlaying,
+        });
         break;
       case 'music-controls-seek-to':
         mediaPlayerStore.seekTo(event.position / 1000);

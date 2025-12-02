@@ -30,10 +30,9 @@ onMounted(async () => {
     isPlaying: false,
   });
 
-  // Load audio track
+  // Init media player
   if (mediaPlayerStore.currentTrack) {
-    mediaPlayerStore.load(mediaPlayerStore.currentTrack);
-    mediaPlayerStore.seekTo(mediaPlayerStore.elapsedTime);
+    mediaPlayerStore.init();
   }
 });
 </script>
