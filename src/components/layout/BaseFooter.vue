@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { QAvatar, QBtn, QFooter, QImg, QSpinnerAudio } from 'quasar';
+import { QAvatar, QBtn, QFooter, QIcon, QImg, QSpinnerBars } from 'quasar';
 import FooterLink from '../FooterLink.vue';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import { Capacitor } from '@capacitor/core';
@@ -25,7 +25,7 @@ const rightLinks = [
   {
     title: 'Stream',
     icon: 'leak_add',
-    to: '/library',
+    to: '/stream',
   },
   {
     title: 'Library',
@@ -104,18 +104,28 @@ const playPauseTrack = async () => {
       </FooterLink>
 
       <div to="/" class="col text-center">
-        <QBtn
-          icon="play_arrow"
-          :loading="mediaPlayerStore.isPlaying"
-          size="md"
-          round
-          @click="playPauseTrack"
-        >
-          <template v-slot:loading>
-            <QSpinnerAudio />
-          </template>
+        <QBtn round>
+          <QImg
+            src="/images/background-cover.jpg"
+            ratio="1"
+            style="border-radius: 50%"
+            :class="{ 'spin-forever': mediaPlayerStore.isPlaying }"
+          />
+          <QIcon v-show="!mediaPlayerStore.isPlaying" name="blur_on" class="absolute" />
+          <QSpinnerBars size="xs" v-show="mediaPlayerStore.isPlaying" class="absolute" />
         </QBtn>
       </div>
+      <!-- <QBtn
+        icon="play_arrow"
+        :loading="mediaPlayerStore.isPlaying"
+        size="md"
+        round
+        @click="playPauseTrack"
+      >
+        <template v-slot:loading>
+          <QSpinnerAudio />
+        </template>
+      </QBtn> -->
 
       <FooterLink
         v-for="link in rightLinks"
@@ -129,4 +139,17 @@ const playPauseTrack = async () => {
   </QFooter>
 </template>
 
-<style scoped></style>
+<style scoped>
+.spin-forever {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>
