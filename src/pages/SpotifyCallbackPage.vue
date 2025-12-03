@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { QPage } from 'quasar';
 import SpotifyOauth from 'src/components/SpotifyOauth.vue';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -22,9 +23,9 @@ const onClose = async () => {
 </script>
 
 <template>
-  <div>
+  <QPage class="h-dvh pt-header">
     <SpotifyOauth v-if="code" :code="code" @close="onClose"></SpotifyOauth>
-  </div>
+  </QPage>
 </template>
 
 <style scoped></style>

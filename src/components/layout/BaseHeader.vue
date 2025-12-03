@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { QBtn, QCard, QDialog, QHeader, QInput, QTab, QTabPanel, QTabPanels, QTabs } from 'quasar';
+import {
+  QBtn,
+  QCard,
+  QDialog,
+  QHeader,
+  QInput,
+  QItem,
+  QTab,
+  QTabPanel,
+  QTabPanels,
+  QTabs,
+  QVirtualScroll,
+} from 'quasar';
 import { ref } from 'vue';
+import TrackItem from '../item/TrackItem.vue';
 
 const searchDialog = ref(false);
 const searchQuery = ref();
 
 const tab = ref<'spotify' | 'library'>('spotify');
+const tracks = ref([
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1,
+  2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+]);
 // const filters = reactive({
 //   tracks: false,
 //   albums: false,
@@ -15,66 +32,76 @@ const tab = ref<'spotify' | 'library'>('spotify');
 
 <template>
   <QHeader
-    class="bg-transparent row justify-between items-center q-pa-none q-ma-none q-gutter-none q-ma-xs"
+    class="bg-transparent flex justify-between items-center p-2 fixed top-0 left-0 right-0 h-16"
   >
-    <div class="bg-glass q-pa-xs">
-      <QBtn icon="menu" round flat ripple class="text-caption"></QBtn>
-      <QBtn icon="search" round flat ripple class="text-caption" @click="searchDialog = true" />
+    <div class="bg-glass p-1">
+      <QBtn icon="menu" round flat ripple class="text-xs"></QBtn>
+      <QBtn icon="search" round flat ripple class="text-xs" @click="searchDialog = true" />
     </div>
-    <div class="bg-glass q-pa-xs">
-      <QBtn icon="notifications" round flat ripple class="text-caption" />
+    <div class="bg-glass p-1">
+      <QBtn icon="notifications" round flat ripple class="text-xs" />
     </div>
 
     <QDialog
       v-model="searchDialog"
       position="top"
-      transition-show="slide-down"
-      transition-hide="slide-up"
-      seamless
+      transition-show="jump-down"
+      transition-hide="fade"
       full-height
       full-width
+      backdrop-filter="blur(4px)"
     >
-      <QCard class="column q-pt-sm bg-blue-grey-5 dialog-container">
-        <div class="row q-gutter-x-sm items-center q-px-sm">
-          <QBtn icon="arrow_back" color="white" dense flat v-close-popup />
+      <QCard
+        class="flex flex-col bg-zinc-800 flex-nowrap"
+        style="height: calc(100vh - 144px) !important"
+      >
+        <div class="sticky top-0 z-30 bg-black pt-2">
+          <div class="flex items-center gap-2 px-2">
+            <QBtn icon="arrow_back" color="white" dense flat v-close-popup />
 
-          <QInput
-            v-model="searchQuery"
-            rounded
-            outlined
-            dense
-            clearable
-            :debounce="500"
-            placeholder="Search tracks, playlists, artists..."
-            color="grey-10"
-            :input-style="{
-              color: 'white',
-            }"
-            class="col-grow bg-glass search-input"
-          />
-          <QBtn icon="more_vert" color="white" dense flat v-close-popup />
+            <QInput
+              v-model="searchQuery"
+              rounded
+              outlined
+              dense
+              clearable
+              :debounce="500"
+              placeholder="Search tracks, playlists, artists..."
+              :input-style="{
+                color: 'white',
+              }"
+              class="grow bg-glass !bg-zinc-800 search-input"
+            />
+            <QBtn icon="more_vert" color="white" dense flat />
+          </div>
+          <div class="mt-4">
+            <QTabs v-model="tab" dense :narrow-indicator="true" class="text-white">
+              <QTab name="spotify" label="Spotify" />
+              <QTab name="library" label="Library" />
+            </QTabs>
+          </div>
         </div>
-        <div class="column col-grow q-mt-md">
-          <QTabs
-            v-model="tab"
-            dense
-            :narrow-indicator="false"
-            active-color="grey-10"
-            class="text-grey-10"
-          >
-            <QTab name="spotify" label="Spotify" />
-            <QTab name="library" label="Library" />
-          </QTabs>
-
-          <QTabPanels v-model="tab" animated swipeable class="col-grow bg-transparent">
-            <QTabPanel name="spotify" class="column fit">
-              <div>
-                <h5>Spotify</h5>
-                <h5>Spotify</h5>
-                <h5>Spotify</h5>
+        <div class="grow flex flex-col flex-wrap">
+          <QTabPanels v-model="tab" animated swipeable class="grow bg-transparent">
+            <QTabPanel name="spotify" class="p-0 m-0">
+              <div class="grow">
+                <QVirtualScroll :items="tracks" v-slot="{ index }">
+                  <QItem :key="index" dense class="p-2 border-b">
+                    <TrackItem
+                      title="Washed Up"
+                      album="Fear"
+                      artist="NF"
+                      cover-path=""
+                      path=""
+                      :duration="500"
+                      :id="22"
+                      :year="2001"
+                    ></TrackItem>
+                  </QItem>
+                </QVirtualScroll>
               </div>
             </QTabPanel>
-            <QTabPanel name="library" class="q-gutter-none">
+            <QTabPanel name="library" class="p-2">
               <h5>Your Library</h5>
             </QTabPanel>
           </QTabPanels>
@@ -112,9 +139,5 @@ const tab = ref<'spotify' | 'library'>('spotify');
 
 .q-chip--selected > .q-icon {
   color: white !important;
-}
-
-.dialog-container {
-  height: calc(100vh - 144px) !important;
 }
 </style>

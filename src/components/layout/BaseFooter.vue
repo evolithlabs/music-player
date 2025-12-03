@@ -24,7 +24,7 @@ const leftLinks = [
 const rightLinks = [
   {
     title: 'Stream',
-    icon: 'leak_add',
+    icon: 'podcasts',
     to: '/stream',
   },
   {
@@ -43,10 +43,12 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <QFooter class="column column-reverse bg-transparent">
-    <div class="column q-mx-xs q-px-xs q-mb-xs bg-grey-10 rounded-borders">
+  <QFooter class="flex flex-col bg-transparent">
+    <div
+      class="flex flex-col mx-1.5 px-1 mb-1 mt-2 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
+    >
       <div class="row no-wrap items-center q-pa-sm q-px-sm">
-        <QAvatar rounded class="q-mr-md">
+        <QAvatar rounded class="mr-3">
           <QImg
             :src="
               mediaPlayerStore.currentTrack?.coverPath
@@ -55,29 +57,20 @@ const playPauseTrack = async () => {
             "
             position="cover"
             ratio="1"
-            class="rounded-borders"
           />
         </QAvatar>
-        <div class="column">
-          <h6
-            class="q-ma-none text-body1 text-weight-bold"
-            style="
-              overflow: hidden;
-              display: -webkit-box;
-              -webkit-box-orient: vertical;
-              -webkit-line-clamp: 1;
-            "
-          >
+        <div class="flex flex-col">
+          <h6 class="text-lg font-bold line-clamp-1">
             {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
           </h6>
-          <span class="text-body2">{{
+          <span class="text-xs line-clamp-1">{{
             mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist'
           }}</span>
         </div>
-        <div class="row q-ml-auto q-gutter-x-sm" style="flex-shrink: 0">
+        <div class="flex ml-auto" style="flex-shrink: 0">
           <QBtn icon="skip_previous" flat fab-mini />
           <QBtn icon="skip_next" flat fab-mini />
-          <div style="width: 2px" class="bg-white self-grow"></div>
+          <div style="width: 2px" class="bg-white self-grow mx-1"></div>
           <QBtn
             :icon="mediaPlayerStore.isPlaying ? 'pause' : 'play_arrow'"
             flat
@@ -87,23 +80,16 @@ const playPauseTrack = async () => {
         </div>
       </div>
 
-      <!-- <div class="row no-wrap q-gutter-md items-center">
-        <span class="text-caption">0:12</span>
+      <!-- <div class="flex flex-nowrap gap-2 items-center px-2">
+        <span class="text-xs">0:12</span>
         <QSlider :model-value="12"> </QSlider>
-        <span class="text-caption">3:21</span>
+        <span class="text-xs">3:21</span>
       </div> -->
     </div>
-    <div class="row q-py-sm q-mb-sm q-mx-lg bg-glass">
-      <FooterLink
-        v-for="link in leftLinks"
-        :key="link.to"
-        :to="link.to"
-        :icon="link.icon"
-        class="col"
-      >
-      </FooterLink>
+    <div class="flex justify-evenly py-2 mb-2 mx-6 bg-glass border border-gray-600">
+      <FooterLink v-for="link in leftLinks" :key="link.to" :to="link.to" :icon="link.icon" />
 
-      <div to="/" class="col text-center">
+      <div to="/" class="text-center">
         <QBtn round>
           <QImg
             src="/images/background-cover.jpg"
@@ -127,14 +113,7 @@ const playPauseTrack = async () => {
         </template>
       </QBtn> -->
 
-      <FooterLink
-        v-for="link in rightLinks"
-        :key="link.to"
-        :to="link.to"
-        :icon="link.icon"
-        class="col"
-      >
-      </FooterLink>
+      <FooterLink v-for="link in rightLinks" :key="link.to" :to="link.to" :icon="link.icon" />
     </div>
   </QFooter>
 </template>

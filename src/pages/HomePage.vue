@@ -1,22 +1,20 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <QBtn @click="toggleToSpotify">Open</QBtn>
+  <QPage class="flex flex-col items-center text-white h-dvh pt-header">
+    <QBtn @click="toggleToSpotify" outline>Open</QBtn>
     <pre class="full-width">
       Access token: {{ spotifyAuthStore.accessToken }} 
       Refresh token: {{ spotifyAuthStore.refreshToken }} 
       Expires at: {{ spotifyAuthStore.expiresAt }}
     </pre>
 
-    <h3>Groovio Music</h3>
-
     <QDialog v-model="spotifyDialog" position="bottom">
       <SpotifyOauth />
     </QDialog>
-  </q-page>
+  </QPage>
 </template>
 
 <script setup lang="ts">
-import { QBtn, QDialog } from 'quasar';
+import { QBtn, QDialog, QPage } from 'quasar';
 import SpotifyOauth from 'src/components/SpotifyOauth.vue';
 import { useSpotifyAuthStore } from 'src/stores/spotify-auth';
 import { ref } from 'vue';

@@ -35,39 +35,39 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <div class="row no-wrap items-center">
-    <QAvatar class="q-mr-md">
+  <div class="flex flex-nowrap items-center grow text-white rounded-md">
+    <QAvatar rounded class="mr-3">
       <QImg
-        :src="Capacitor.convertFileSrc(coverPath) ?? '/images/background-cover.jpg'"
-        width="64px"
+        :src="coverPath ? Capacitor.convertFileSrc(coverPath) : '/images/background-cover.jpg'"
+        width="48px"
         position="cover"
         ratio="1"
-        class="rounded-borders"
+        class="rounded-md"
       />
     </QAvatar>
-    <div class="column">
-      <h6
-        class="q-ma-none text-body1 text-weight-bold"
-        style="
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 1;
-        "
-      >
+    <div class="flex flex-col mr-4">
+      <h6 class="font-bold line-clamp-1 text-sm">
         {{ title }}
       </h6>
-      <span class="text-body2">{{ artist }}</span>
+      <div class="flex items-center gap-1">
+        <span class="text-xs line-clamp-1">{{ artist }}</span>
+        <span>•</span>
+        <span class="text-xs">3:31</span>
+      </div>
     </div>
-    <div class="row q-ml-auto q-gutter-x-sm" style="flex-shrink: 0">
-      <QBtn icon="download" fab-mini />
+    <div class="flex items-baseline ml-auto gap-2 shrink-0">
+      <QBtn icon="download" round color="white" flat class="text-xs" />
       <QBtn
         :icon="
           mediaPlayerStore.currentTrack?.id == id && mediaPlayerStore.isPlaying
             ? 'pause'
             : 'play_arrow'
         "
-        fab-mini
+        round
+        color="white"
+        glossy
+        flat
+        class="text-xs"
         @click="playPauseTrack"
       />
     </div>
