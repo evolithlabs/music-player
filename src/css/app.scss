@@ -1,1 +1,15 @@
 // app global css in SCSS form
+.bg-glass {
+  /* 1. Glass Effect */
+  backdrop-filter: blur(10px); /* Stronger blur for this look */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+
+  /* 2. Semi-Transparent Dark Color */
+  background-color: rgba(30, 30, 30, 0.5);
+
+  /* 3. Fully Rounded Edges (Pill Shape) */
+  border-radius: 50px;
+
+  /* 4. Optional: Box Shadow for depth */
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}

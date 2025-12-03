@@ -35,7 +35,7 @@ const rightLinks = [
 ];
 
 const playPauseTrack = async () => {
-  mediaControlsStore.executeAction({
+  await mediaControlsStore.executeAction({
     message: 'music-controls-toggle-play-pause',
     position: 0,
   });
@@ -43,9 +43,9 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <QFooter elevated class="bg-blue-9">
-    <div class="column q-pa-sm bg-blue-10">
-      <div class="row no-wrap items-center">
+  <QFooter class="column column-reverse bg-transparent">
+    <div class="column q-mx-xs q-px-xs q-mb-xs bg-grey-10 rounded-borders">
+      <div class="row no-wrap items-center q-pa-sm q-px-sm">
         <QAvatar rounded class="q-mr-md">
           <QImg
             :src="
@@ -93,7 +93,7 @@ const playPauseTrack = async () => {
         <span class="text-caption">3:21</span>
       </div> -->
     </div>
-    <div class="row q-py-sm">
+    <div class="row q-py-sm q-mb-sm q-mx-lg bg-glass">
       <FooterLink
         v-for="link in leftLinks"
         :key="link.to"

@@ -1,7 +1,6 @@
 <template>
-  <QLayout view="lHh Lpr lFf">
-    <QHeader elevated> Groovio Music</QHeader>
-
+  <QLayout view="lHh Lpr lFf" class="bg-blue-grey-5">
+    <BaseHeader></BaseHeader>
     <BaseFooter></BaseFooter>
 
     <q-page-container>
@@ -11,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { QHeader, QLayout } from 'quasar';
+import { QLayout } from 'quasar';
 import BaseFooter from 'src/components/layout/BaseFooter.vue';
+import BaseHeader from 'src/components/layout/BaseHeader.vue';
 </script>

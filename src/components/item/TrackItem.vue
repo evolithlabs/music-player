@@ -13,12 +13,12 @@ const mediaControlsStore = useMediaControlsStore();
 const playPauseTrack = async () => {
   if (mediaPlayerStore.currentTrack?.id == props.id) {
     // toggle play/pause
-    mediaControlsStore.executeAction({
+    await mediaControlsStore.executeAction({
       message: 'music-controls-toggle-play-pause',
       position: 0,
     });
   } else {
-    mediaPlayerStore.loadAndPlayTracks(props, [props], {
+    await mediaPlayerStore.loadAndPlayTracks(props, [props], {
       type: 'misc',
     });
 

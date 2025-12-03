@@ -9,12 +9,17 @@ const { to, icon } = defineProps<{
 
 <template>
   <RouterLink :to="to" class="link content-center text-center text-white">
-    <QBtn :icon="icon" size="md" flat round ripple />
+    <QBtn :icon="icon" size="md" round ripple flat />
   </RouterLink>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .link {
   text-decoration: none;
+}
+
+.router-link-exact-active > .q-btn {
+  color: $grey-10;
+  background-color: white;
 }
 </style>
