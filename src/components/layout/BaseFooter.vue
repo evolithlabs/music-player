@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { QAvatar, QBtn, QFooter, QIcon, QImg, QSpinnerBars } from 'quasar';
+import { QBtn, QFooter, QIcon, QImg, QSlider, QSpinnerBars, QTab, QTabs } from 'quasar';
 import FooterLink from '../FooterLink.vue';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import { Capacitor } from '@capacitor/core';
@@ -45,6 +45,8 @@ const toggleFullscreenPlayerVisibility = () => {
   showPlayerInFullscreen.value = !showPlayerInFullscreen.value;
 };
 
+const trackOrLyricsToggle = ref<'track' | 'lyrics'>('track');
+
 const playPauseTrack = async () => {
   await mediaControlsStore.executeAction({
     message: 'music-controls-toggle-play-pause',
@@ -57,54 +59,138 @@ const playPauseTrack = async () => {
   <QFooter
     class="flex flex-col gap-1 justify-end bg-transparent h-[9.5rem] py-2.5 !z-50"
     :class="{ '!h-full pt-0': showPlayerInFullscreen }"
-    @click="toggleFullscreenPlayerVisibility"
+    @click="() => (!showPlayerInFullscreen ? toggleFullscreenPlayerVisibility() : null)"
   >
+    <!-- Media Player -->
     <div
       v-show="showPlayer"
       class="flex flex-col mx-2 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
       :class="{
-        'grow mx-0 transition-all duration-500': showPlayerInFullscreen,
+        'grow mx-0 transition-all duration-200 ': showPlayerInFullscreen,
       }"
     >
-      <div class="row no-wrap items-center q-pa-sm q-px-sm">
-        <QAvatar rounded class="mr-3">
-          <QImg
-            :src="
-              mediaPlayerStore.currentTrack?.coverPath
-                ? Capacitor.convertFileSrc(mediaPlayerStore.currentTrack?.coverPath)
-                : '/images/background-cover.jpg'
-            "
-            position="cover"
-            ratio="1"
-          />
-        </QAvatar>
-        <div class="flex flex-col">
-          <h6 class="text-base font-bold line-clamp-1">
-            {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
+      <div
+        class="flex flex-nowrap items-center p-2"
+        :class="{
+          'flex-col grow gap-8 p-4': showPlayerInFullscreen,
+        }"
+      >
+        <div
+          v-show="showPlayerInFullscreen"
+          class="flex flex-nowrap items-center justify-between gap-4 w-full"
+        >
+          <QBtn
+            icon="arrow_back"
+            dense
+            round
+            flat
+            class="shrink-0"
+            @click.stop="toggleFullscreenPlayerVisibility"
+          ></QBtn>
+          <h6 class="text-lg font-medium line-clamp-1 hidden">
+            {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }} by
+            {{ mediaPlayerStore.currentTrack?.artist ?? 'nf' }}
           </h6>
-          <span class="text-xs line-clamp-1">{{
-            mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist'
-          }}</span>
+
+          <QTabs v-model="trackOrLyricsToggle" dense :narrow-indicator="true" class="text-white">
+            <QTab name="track" label="Track" />
+            <QTab name="lyrics" label="Lyrics" />
+          </QTabs>
+          <QBtn icon="more_vert" dense round flat class="shrink-0"></QBtn>
         </div>
-        <div class="flex ml-auto" style="flex-shrink: 0">
-          <QBtn icon="skip_previous" flat fab-mini />
-          <QBtn icon="skip_next" flat fab-mini />
-          <div style="width: 2px" class="bg-white self-grow mx-1"></div>
+        <QImg
+          :src="
+            mediaPlayerStore.currentTrack?.coverPath
+              ? Capacitor.convertFileSrc(mediaPlayerStore.currentTrack?.coverPath)
+              : '/images/background-cover.jpg'
+          "
+          position="cover"
+          ratio="1"
+          no-transition
+          class="h-full w-auto aspect-square rounded-md mr-3"
+          :class="{
+            'h-auto mr-0 grow ': showPlayerInFullscreen,
+          }"
+        />
+        <div class="flex flex-col" :class="{ 'text-center gap-2': showPlayerInFullscreen }">
+          <h5
+            class="text-base font-bold line-clamp-1"
+            :class="{ 'text-2xl transition-all': showPlayerInFullscreen }"
+          >
+            {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
+          </h5>
+          <span
+            class="text-xs line-clamp-1 text-white/80"
+            :class="{ 'text-base transition-all': showPlayerInFullscreen }"
+          >
+            {{ mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist' }}
+          </span>
+        </div>
+
+        <div
+          v-show="showPlayerInFullscreen"
+          class="w-full flex flex-nowrap gap-4 items-center px-2"
+        >
+          <span class="text-xs">0:12</span>
+          <QSlider :model-value="12" color="white" track-color="grey-8" class="grow"> </QSlider>
+          <span class="text-xs">3:21</span>
+        </div>
+        <div
+          class="flex items-center gap-3 shrink-0"
+          :class="{
+            'mt-auto ': showPlayerInFullscreen,
+            'ml-auto': !showPlayerInFullscreen,
+          }"
+        >
+          <QBtn
+            v-show="showPlayerInFullscreen"
+            icon="shuffle"
+            flat
+            round
+            dense
+            class="text-md order-1"
+          />
+          <QBtn
+            icon="skip_previous"
+            flat
+            round
+            dense
+            class="text-xs order-2"
+            :class="{ 'text-2xl transition-all ': showPlayerInFullscreen }"
+            @click.stop=""
+          />
+          <QBtn
+            icon="skip_next"
+            flat
+            round
+            dense
+            class="text-xs order-3"
+            :class="{ 'text-2xl transition-all ': showPlayerInFullscreen }"
+            @click.stop=""
+          />
+          <div v-show="!showPlayerInFullscreen" class="bg-white grow mx-1 h-8 w-0.5 order-4"></div>
           <QBtn
             :icon="mediaPlayerStore.isPlaying ? 'pause' : 'play_arrow'"
+            round
+            dense
+            class="text-xs order-5"
+            :outline="showPlayerInFullscreen"
+            :class="{ 'text-2xl !order-2 ': showPlayerInFullscreen }"
+            @click.stop="playPauseTrack"
+          />
+          <QBtn
+            v-show="showPlayerInFullscreen"
+            icon="repeat"
             flat
-            fab-mini
-            @click="playPauseTrack"
+            round
+            dense
+            class="text-md order-6"
           />
         </div>
       </div>
-
-      <!-- <div class="flex flex-nowrap gap-2 items-center px-2">
-        <span class="text-xs">0:12</span>
-        <QSlider :model-value="12"> </QSlider>
-        <span class="text-xs">3:21</span>
-      </div> -->
     </div>
+
+    <!-- Navigation -->
     <div class="flex justify-evenly py-2 mx-6 bg-glass border border-gray-600">
       <FooterLink v-for="link in leftLinks" :key="link.to" :to="link.to" :icon="link.icon" />
 
