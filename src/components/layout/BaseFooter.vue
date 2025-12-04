@@ -4,6 +4,7 @@ import FooterLink from '../FooterLink.vue';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import { Capacitor } from '@capacitor/core';
 import { useMediaControlsStore } from 'src/stores/media-controls';
+import { ref } from 'vue';
 
 const mediaPlayerStore = useMediaPlayerStore();
 const mediaControlsStore = useMediaControlsStore();
@@ -34,6 +35,11 @@ const rightLinks = [
   },
 ];
 
+const showPlayer = ref(true);
+const togglePlayerVisibility = () => {
+  showPlayer.value = !showPlayer.value;
+};
+
 const playPauseTrack = async () => {
   await mediaControlsStore.executeAction({
     message: 'music-controls-toggle-play-pause',
@@ -43,9 +49,10 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <QFooter class="flex flex-col gap-1 justify-center bg-transparent h-36">
+  <QFooter class="flex flex-col gap-1 justify-end bg-transparent h-40 py-3">
     <div
-      class="flex flex-col mx-1.5 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
+      v-show="showPlayer"
+      class="flex flex-col mx-2 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
     >
       <div class="row no-wrap items-center q-pa-sm q-px-sm">
         <QAvatar rounded class="mr-3">
@@ -60,7 +67,7 @@ const playPauseTrack = async () => {
           />
         </QAvatar>
         <div class="flex flex-col">
-          <h6 class="text-lg font-bold line-clamp-1">
+          <h6 class="text-base font-bold line-clamp-1">
             {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
           </h6>
           <span class="text-xs line-clamp-1">{{
@@ -89,17 +96,36 @@ const playPauseTrack = async () => {
     <div class="flex justify-evenly py-2 mx-6 bg-glass border border-gray-600">
       <FooterLink v-for="link in leftLinks" :key="link.to" :to="link.to" :icon="link.icon" />
 
-      <div to="/" class="text-center">
-        <QBtn round>
-          <QImg
-            src="/images/background-cover.jpg"
-            ratio="1"
-            style="border-radius: 50%"
-            :class="{ 'spin-forever': mediaPlayerStore.isPlaying }"
-          />
-          <QIcon v-show="!mediaPlayerStore.isPlaying" name="blur_on" class="absolute" />
-          <QSpinnerBars size="xs" v-show="mediaPlayerStore.isPlaying" class="absolute" />
-        </QBtn>
+      <div
+        class="text-center relative mx-4 bg-black transition-all"
+        :class="{ '!mx-2': showPlayer }"
+      >
+        <QBtn round outline />
+
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-glass p-2 transition-all duration-[5000]"
+          :class="{
+            'p-2 ring ring-gray-600': !showPlayer,
+          }"
+        >
+          <QBtn
+            round
+            class="text-sm z-50"
+            :class="{
+              '!text-lg': !showPlayer,
+            }"
+            @click="togglePlayerVisibility"
+          >
+            <QImg
+              src="/images/background-cover.jpg"
+              ratio="1"
+              style="border-radius: 50%"
+              :class="{ 'spin-forever': mediaPlayerStore.isPlaying }"
+            />
+            <QIcon v-show="!mediaPlayerStore.isPlaying" name="blur_on" class="absolute" />
+            <QSpinnerBars size="xs" v-show="mediaPlayerStore.isPlaying" class="absolute" />
+          </QBtn>
+        </div>
       </div>
       <!-- <QBtn
         icon="play_arrow"
