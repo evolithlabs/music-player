@@ -42,7 +42,7 @@ const showTrackOptions = () => {
     title: `${track.artist} - ${track.title}`,
     grid: false,
     dark: true,
-    class: 'bg-black text-white border-t z-50',
+    class: 'bg-black text-white border-t',
     actions: [
       {
         icon: 'play_arrow',

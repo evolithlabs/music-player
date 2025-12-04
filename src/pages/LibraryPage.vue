@@ -1,5 +1,5 @@
 <template>
-  <QPage class="flex flex-col flex-nowrap text-white pt-header h-dvh">
+  <QPage class="flex flex-col flex-nowrap text-white pt-header pb-footer">
     <div>
       <h1 class="text-3xl flex items-center gap-2 font-bold px-2">
         <QIcon name="album" class="text-4xl" />
@@ -17,7 +17,7 @@
       </QTabs>
     </div>
 
-    <QTabPanels v-model="tab" animated swipeable class="h-full bg-transparent mb-footer">
+    <QTabPanels v-model="tab" animated swipeable class="grow bg-transparent">
       <QTabPanel name="tracks" class="p-0 m-0">
         <QVirtualScroll :items="mediaLibraryStore.tracks ?? tracks" v-slot="{ item, index }">
           <QItem :key="index" dense class="p-2 border-b">

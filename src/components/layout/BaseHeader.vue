@@ -50,13 +50,14 @@ const tracks = ref([
       full-height
       full-width
       backdrop-filter="blur(4px)"
+      class="z-[5000]"
     >
       <QCard
-        class="flex flex-col bg-zinc-800 flex-nowrap"
-        style="height: calc(100vh - 144px) !important"
+        class="flex flex-col bg-glass flex-nowrap"
+        style="height: calc(100vh - 8rem) !important"
       >
-        <div class="sticky top-0 z-30 bg-black pt-2">
-          <div class="flex items-center gap-2 px-2">
+        <div class="sticky top-0 z-30 pt-4 px-4">
+          <div class="flex items-center gap-2">
             <QBtn icon="arrow_back" color="white" dense flat v-close-popup />
 
             <QInput
@@ -81,7 +82,7 @@ const tracks = ref([
             </QTabs>
           </div>
         </div>
-        <div class="grow flex flex-col flex-wrap">
+        <div class="grow flex flex-col flex-wrap bg-zinc-800">
           <QTabPanels v-model="tab" animated swipeable class="grow bg-transparent">
             <QTabPanel name="spotify" class="p-0 m-0">
               <div class="grow">

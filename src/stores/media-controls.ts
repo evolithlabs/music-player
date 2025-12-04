@@ -7,15 +7,15 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
   const mediaPlayerStore = useMediaPlayerStore();
 
   const defaultMediaControlOptions: MediaControlOptions = {
-    hasPrev: false,
-    hasNext: false,
-    hasClose: true,
+    hasPrev: true,
+    hasNext: true,
+    hasClose: false,
     elapsed: 0,
     hasSkipForward: true,
     hasSkipBackward: true,
     skipForwardInterval: 15,
     skipBackwardInterval: 15,
-    hasScrubbing: false,
+    hasScrubbing: true,
     dismissable: true,
     ticker: '',
     playIcon: 'media_play',
