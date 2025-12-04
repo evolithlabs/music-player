@@ -4,6 +4,10 @@
       <h1 class="text-3xl flex items-center gap-2 font-bold px-2">
         <QIcon name="album" class="text-4xl" />
         Your Library
+
+        <QBtn dense round flat icon="arrow_circle_down" class="ml-auto text-lg">
+          <QBadge color="black" text-color="white" rounded floating transparent> 4 </QBadge>
+        </QBtn>
       </h1>
       <QTabs v-model="tab" dense :narrow-indicator="false" class="text-white bg-zinc-800 mt-1">
         <QTab name="tracks" label="Tracks" :ripple="false" />
@@ -37,7 +41,18 @@
 </template>
 
 <script setup lang="ts">
-import { QIcon, QItem, QPage, QTab, QTabPanel, QTabPanels, QTabs, QVirtualScroll } from 'quasar';
+import {
+  QBadge,
+  QBtn,
+  QIcon,
+  QItem,
+  QPage,
+  QTab,
+  QTabPanel,
+  QTabPanels,
+  QTabs,
+  QVirtualScroll,
+} from 'quasar';
 import TrackItem from 'src/components/item/TrackItem.vue';
 import { useMediaLibraryStore } from 'src/stores/media-library';
 import { ref } from 'vue';

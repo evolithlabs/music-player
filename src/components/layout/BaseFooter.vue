@@ -43,9 +43,9 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <QFooter class="flex flex-col bg-transparent">
+  <QFooter class="flex flex-col gap-1 justify-center bg-transparent h-36">
     <div
-      class="flex flex-col mx-1.5 px-1 mb-1 mt-2 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
+      class="flex flex-col mx-1.5 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
     >
       <div class="row no-wrap items-center q-pa-sm q-px-sm">
         <QAvatar rounded class="mr-3">
@@ -86,7 +86,7 @@ const playPauseTrack = async () => {
         <span class="text-xs">3:21</span>
       </div> -->
     </div>
-    <div class="flex justify-evenly py-2 mb-2 mx-6 bg-glass border border-gray-600">
+    <div class="flex justify-evenly py-2 mx-6 bg-glass border border-gray-600">
       <FooterLink v-for="link in leftLinks" :key="link.to" :to="link.to" :icon="link.icon" />
 
       <div to="/" class="text-center">
