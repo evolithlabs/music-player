@@ -16,9 +16,9 @@
 }
 
 .pb-footer {
-  @apply pb-36;
+  @apply pb-[9.5rem];
 }
 
 .mb-footer {
-  @apply mb-36;
+  @apply mb-[9.5rem];
 }

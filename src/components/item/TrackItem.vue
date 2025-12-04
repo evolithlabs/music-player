@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { QBtn, QBtnDropdown, QImg, QItem, QList } from 'quasar';
+import { QAvatar, QBtn, QImg, useQuasar } from 'quasar';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import type { Track } from 'src/types/tracks';
@@ -32,6 +32,50 @@ const playPauseTrack = async () => {
     });
   }
 };
+
+const $q = useQuasar();
+const showTrackOptions = () => {
+  $q.bottomSheet({
+    title: `${props.artist} - ${props.title}`,
+    grid: false,
+    dark: true,
+    class: 'bg-zinc-900 text-white border-t z-50',
+    actions: [
+      {
+        icon: 'play_arrow',
+        label: 'Play song',
+        value: 'play',
+      },
+      {
+        icon: 'visibility',
+        label: 'More details',
+        value: 'details',
+      },
+      {
+        icon: 'person_2',
+        label: 'Go to artist',
+        value: 'artist',
+      },
+      {
+        icon: 'album',
+        label: 'Go to album',
+        value: 'album',
+      },
+      {
+        icon: 'download',
+        label: 'Download now',
+        value: 'download',
+      },
+      {
+        icon: 'library_add',
+        label: 'Add to library',
+        value: 'library',
+      },
+    ],
+  }).onOk((value) => {
+    console.log('Option selected:', value);
+  });
+};
 </script>
 
 <template>
@@ -42,7 +86,6 @@ const playPauseTrack = async () => {
         width="48px"
         position="cover"
         ratio="1"
-        class="rounded-md"
       />
       <QBtn
         :icon="
@@ -67,62 +110,7 @@ const playPauseTrack = async () => {
     </div>
     <div class="flex items-baseline ml-auto shrink-0">
       <QBtn icon="download" round color="white" flat class="text-xs" />
-      <QBtnDropdown dropdown-icon="more_vert" no-icon-animation round flat class="text-xs">
-        <QList dense class="bg-black text-white py-2">
-          <QItem class="!p-0">
-            <QBtn
-              icon="visibility"
-              label="More info"
-              align="left"
-              flat
-              v-close-popup
-              class="grow text-xs"
-            />
-          </QItem>
-          <QItem class="!p-0">
-            <QBtn
-              icon="person_2"
-              label="Go to artist"
-              align="left"
-              flat
-              v-close-popup
-              class="grow text-xs"
-            />
-          </QItem>
-          <QItem class="!p-0">
-            <QBtn
-              icon="album"
-              label="Go to album"
-              align="left"
-              flat
-              v-close-popup
-              class="grow text-xs"
-            />
-          </QItem>
-          <QItem class="!p-0">
-            <QBtn
-              icon="download"
-              label="Download now"
-              align="left"
-              class="grow text-xs"
-              flat
-              v-close-popup
-              @close="() => console.log('gay')"
-            />
-          </QItem>
-          <QItem class="!p-0">
-            <QBtn
-              icon="library_add"
-              label="Add to library"
-              align="left"
-              class="grow text-xs"
-              flat
-              v-close-popup
-              @close="() => console.log('gay')"
-            />
-          </QItem>
-        </QList>
-      </QBtnDropdown>
+      <QBtn icon="more_vert" round color="white" flat class="text-xs" @click="showTrackOptions" />
     </div>
   </div>
 </template>

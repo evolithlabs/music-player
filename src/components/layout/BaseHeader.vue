@@ -32,7 +32,7 @@ const tracks = ref([
 
 <template>
   <QHeader
-    class="bg-transparent flex justify-between items-center p-2 fixed top-0 left-0 right-0 h-16"
+    class="bg-transparent flex justify-between items-center p-2 fixed top-0 left-0 right-0 h-16 z-50"
   >
     <div class="bg-glass p-1">
       <QBtn icon="menu" round flat ripple class="text-xs"></QBtn>

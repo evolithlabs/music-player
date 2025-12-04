@@ -40,6 +40,11 @@ const togglePlayerVisibility = () => {
   showPlayer.value = !showPlayer.value;
 };
 
+const showPlayerInFullscreen = ref(true);
+const toggleFullscreenPlayerVisibility = () => {
+  showPlayerInFullscreen.value = !showPlayerInFullscreen.value;
+};
+
 const playPauseTrack = async () => {
   await mediaControlsStore.executeAction({
     message: 'music-controls-toggle-play-pause',
@@ -49,10 +54,17 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <QFooter class="flex flex-col gap-1 justify-end bg-transparent h-40 py-3">
+  <QFooter
+    class="flex flex-col gap-1 justify-end bg-transparent h-[9.5rem] py-2.5 !z-50"
+    :class="{ '!h-full pt-0': showPlayerInFullscreen }"
+    @click="toggleFullscreenPlayerVisibility"
+  >
     <div
       v-show="showPlayer"
       class="flex flex-col mx-2 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
+      :class="{
+        'grow mx-0 transition-all duration-500': showPlayerInFullscreen,
+      }"
     >
       <div class="row no-wrap items-center q-pa-sm q-px-sm">
         <QAvatar rounded class="mr-3">
