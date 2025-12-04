@@ -40,7 +40,7 @@ const togglePlayerVisibility = () => {
   showPlayer.value = !showPlayer.value;
 };
 
-const showPlayerInFullscreen = ref(true);
+const showPlayerInFullscreen = ref(false);
 const toggleFullscreenPlayerVisibility = () => {
   showPlayerInFullscreen.value = !showPlayerInFullscreen.value;
 };
@@ -59,20 +59,20 @@ const playPauseTrack = async () => {
   <QFooter
     class="flex flex-col gap-1 justify-end bg-transparent h-[9.5rem] py-2.5 !z-50"
     :class="{ '!h-full pt-0': showPlayerInFullscreen }"
-    @click="() => (!showPlayerInFullscreen ? toggleFullscreenPlayerVisibility() : null)"
   >
     <!-- Media Player -->
     <div
       v-show="showPlayer"
       class="flex flex-col mx-2 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
       :class="{
-        'grow mx-0 transition-all duration-200 ': showPlayerInFullscreen,
+        'grow !mx-0 transition-all duration-200 ': showPlayerInFullscreen,
       }"
+      @click="() => (!showPlayerInFullscreen ? toggleFullscreenPlayerVisibility() : null)"
     >
       <div
         class="flex flex-nowrap items-center p-2"
         :class="{
-          'flex-col grow gap-8 p-4': showPlayerInFullscreen,
+          'flex-col justify-between grow p-4 pb-8': showPlayerInFullscreen,
         }"
       >
         <div
@@ -109,19 +109,19 @@ const playPauseTrack = async () => {
           no-transition
           class="h-full w-auto aspect-square rounded-md mr-3"
           :class="{
-            'h-auto mr-0 grow ': showPlayerInFullscreen,
+            '!h-auto !w-full !mr-0  ': showPlayerInFullscreen,
           }"
         />
-        <div class="flex flex-col" :class="{ 'text-center gap-2': showPlayerInFullscreen }">
+        <div class="flex flex-col" :class="{ 'text-center': showPlayerInFullscreen }">
           <h5
             class="text-base font-bold line-clamp-1"
-            :class="{ 'text-2xl transition-all': showPlayerInFullscreen }"
+            :class="{ '!text-2xl transition-all': showPlayerInFullscreen }"
           >
             {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
           </h5>
           <span
             class="text-xs line-clamp-1 text-white/80"
-            :class="{ 'text-base transition-all': showPlayerInFullscreen }"
+            :class="{ '!text-base transition-all': showPlayerInFullscreen }"
           >
             {{ mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist' }}
           </span>
@@ -138,7 +138,7 @@ const playPauseTrack = async () => {
         <div
           class="flex items-center gap-3 shrink-0"
           :class="{
-            'mt-auto ': showPlayerInFullscreen,
+            'mt-autoo ': showPlayerInFullscreen,
             'ml-auto': !showPlayerInFullscreen,
           }"
         >
@@ -156,7 +156,7 @@ const playPauseTrack = async () => {
             round
             dense
             class="text-xs order-2"
-            :class="{ 'text-2xl transition-all ': showPlayerInFullscreen }"
+            :class="{ '!text-2xl transition-all ': showPlayerInFullscreen }"
             @click.stop=""
           />
           <QBtn
@@ -165,7 +165,7 @@ const playPauseTrack = async () => {
             round
             dense
             class="text-xs order-3"
-            :class="{ 'text-2xl transition-all ': showPlayerInFullscreen }"
+            :class="{ '!text-2xl transition-all ': showPlayerInFullscreen }"
             @click.stop=""
           />
           <div v-show="!showPlayerInFullscreen" class="bg-white grow mx-1 h-8 w-0.5 order-4"></div>
@@ -174,8 +174,7 @@ const playPauseTrack = async () => {
             round
             dense
             class="text-xs order-5"
-            :outline="showPlayerInFullscreen"
-            :class="{ 'text-2xl !order-2 ': showPlayerInFullscreen }"
+            :class="{ '!text-2xl !order-2 ring ring-white': showPlayerInFullscreen }"
             @click.stop="playPauseTrack"
           />
           <QBtn

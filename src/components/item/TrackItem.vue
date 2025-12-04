@@ -39,7 +39,7 @@ const showTrackOptions = () => {
     title: `${props.artist} - ${props.title}`,
     grid: false,
     dark: true,
-    class: 'bg-zinc-900 text-white border-t z-50',
+    class: 'bg-black text-white border-t z-50',
     actions: [
       {
         icon: 'play_arrow',
