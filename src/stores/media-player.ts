@@ -23,26 +23,6 @@ export const useMediaPlayerStore = defineStore(
       return queue.value[queueIndex.value];
     });
 
-    const init = () => {
-      if (currentTrack.value) {
-        // Load the track
-        audio.src = Capacitor.convertFileSrc(currentTrack.value.path);
-        audio.load();
-
-        // Set current time
-        audio.currentTime = elapsedTime.value;
-
-        // Listen to audio events
-        audio.onplay = () => (isPlaying.value = true);
-        audio.onpause = () => (isPlaying.value = false);
-        audio.onended = () => (isPlaying.value = false);
-
-        audio.ontimeupdate = () => {
-          elapsedTime.value = audio.currentTime;
-        };
-      }
-    };
-
     const loadTracks = (track: Track, tracksQueue: Track[], trackSource: QueueSource) => {
       // Find the starting index
       const index = tracksQueue.findIndex((t) => t.id === track.id);
@@ -57,8 +37,16 @@ export const useMediaPlayerStore = defineStore(
       queue.value = tracksQueue;
 
       // Load the track
+      loadAudio();
+    };
+
+    const loadAudio = () => {
+      // Load the track
       audio.src = Capacitor.convertFileSrc(currentTrack.value?.path ?? '');
       audio.load();
+
+      // Set current time
+      audio.currentTime = elapsedTime.value;
 
       // Listen to audio events
       audio.onplay = () => (isPlaying.value = true);
@@ -75,6 +63,7 @@ export const useMediaPlayerStore = defineStore(
       tracksQueue: Track[],
       trackSource: QueueSource,
     ) => {
+      elapsedTime.value = 0;
       loadTracks(track, tracksQueue, trackSource);
       await play();
     };
@@ -98,6 +87,30 @@ export const useMediaPlayerStore = defineStore(
       }
     };
 
+    const prev = async () => {
+      if (queueIndex.value > 0) {
+        queueIndex.value -= 1;
+      } else {
+        queueIndex.value = queue.value.length - 1;
+      }
+      elapsedTime.value = 0;
+
+      loadAudio();
+      await play();
+    };
+
+    const next = async () => {
+      if (queueIndex.value < queue.value.length - 1) {
+        queueIndex.value += 1;
+      } else {
+        queueIndex.value = 0;
+      }
+      elapsedTime.value = 0;
+
+      loadAudio();
+      await play();
+    };
+
     const seekTo = (position: number) => {
       audio.currentTime = position;
     };
@@ -109,12 +122,14 @@ export const useMediaPlayerStore = defineStore(
       audio,
       isPlaying,
       elapsedTime,
-      init,
+      loadAudio,
       loadTracks,
       loadAndPlayTracks,
       play,
       pause,
       toggle,
+      prev,
+      next,
       seekTo,
     };
   },

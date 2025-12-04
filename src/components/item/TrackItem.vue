@@ -5,29 +5,32 @@ import { useMediaPlayerStore } from 'src/stores/media-player';
 import type { Track } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 
-const props = defineProps<Track>();
+const { track, queue } = defineProps<{
+  track: Track;
+  queue?: Track[];
+}>();
 
 const mediaPlayerStore = useMediaPlayerStore();
 const mediaControlsStore = useMediaControlsStore();
 
 const playPauseTrack = async () => {
-  if (mediaPlayerStore.currentTrack?.id == props.id) {
+  if (mediaPlayerStore.currentTrack?.id == track.id) {
     // toggle play/pause
     await mediaControlsStore.executeAction({
       message: 'music-controls-toggle-play-pause',
       position: 0,
     });
   } else {
-    await mediaPlayerStore.loadAndPlayTracks(props, [props], {
+    await mediaPlayerStore.loadAndPlayTracks(track, queue ?? [track], {
       type: 'misc',
     });
 
     await mediaControlsStore.updateMetadata({
-      track: props.title,
-      artist: props.artist,
-      album: props.album,
-      cover: props.coverPath,
-      duration: props.duration,
+      track: track.title,
+      artist: track.artist,
+      album: track.album,
+      cover: track.coverPath,
+      duration: track.duration,
       isPlaying: true,
     });
   }
@@ -36,7 +39,7 @@ const playPauseTrack = async () => {
 const $q = useQuasar();
 const showTrackOptions = () => {
   $q.bottomSheet({
-    title: `${props.artist} - ${props.title}`,
+    title: `${track.artist} - ${track.title}`,
     grid: false,
     dark: true,
     class: 'bg-black text-white border-t z-50',
@@ -82,14 +85,18 @@ const showTrackOptions = () => {
   <div class="flex flex-nowrap items-center grow text-white rounded-md">
     <QAvatar rounded class="mr-3 relative">
       <QImg
-        :src="coverPath ? Capacitor.convertFileSrc(coverPath) : '/images/background-cover.jpg'"
+        :src="
+          track.coverPath
+            ? Capacitor.convertFileSrc(track.coverPath)
+            : '/images/background-cover.jpg'
+        "
         width="48px"
         position="cover"
         ratio="1"
       />
       <QBtn
         :icon="
-          mediaPlayerStore.currentTrack?.id == id && mediaPlayerStore.isPlaying
+          mediaPlayerStore.currentTrack?.id == track.id && mediaPlayerStore.isPlaying
             ? 'pause'
             : 'play_arrow'
         "
@@ -100,10 +107,10 @@ const showTrackOptions = () => {
     </QAvatar>
     <div class="flex flex-col mr-4">
       <h6 class="font-bold line-clamp-1 text-sm">
-        {{ title }}
+        {{ track.title }}
       </h6>
       <div class="flex items-center gap-1">
-        <span class="text-xs line-clamp-1">{{ artist }}</span>
+        <span class="text-xs line-clamp-1">{{ track.artist }}</span>
         <span>•</span>
         <span class="text-xs">3:31</span>
       </div>

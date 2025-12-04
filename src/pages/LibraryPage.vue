@@ -19,17 +19,25 @@
 
     <QTabPanels v-model="tab" animated swipeable class="h-full bg-transparent mb-footer">
       <QTabPanel name="tracks" class="p-0 m-0">
-        <QVirtualScroll :items="mediaLibraryStore.tracks ?? tracks" v-slot="{ index }">
+        <QVirtualScroll :items="mediaLibraryStore.tracks ?? tracks" v-slot="{ item, index }">
           <QItem :key="index" dense class="p-2 border-b">
             <TrackItem
-              title="Washed Up"
-              album="Fear"
-              artist="NF"
-              cover-path=""
-              path=""
-              :duration="500"
-              :id="22"
-              :year="2001"
+              v-if="mediaLibraryStore.tracks"
+              :track="item"
+              :queue="mediaLibraryStore.tracks"
+            ></TrackItem>
+            <TrackItem
+              v-else
+              :track="{
+                id: 22,
+                title: 'Washed Up',
+                album: 'Fear',
+                artist: 'NF',
+                coverPath: '',
+                path: '',
+                duration: 500,
+                year: 2001,
+              }"
             ></TrackItem>
           </QItem>
         </QVirtualScroll>

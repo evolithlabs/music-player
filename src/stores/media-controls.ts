@@ -79,9 +79,31 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
     switch (event.message) {
       case 'music-controls-next':
         // next
+        await mediaPlayerStore.prev();
+        await updateMetadata({
+          track: mediaPlayerStore.currentTrack?.title || 'Unknown',
+          artist: mediaPlayerStore.currentTrack?.artist || 'Unknown',
+          album: mediaPlayerStore.currentTrack?.album || 'Unknown',
+          cover: mediaPlayerStore.currentTrack?.coverPath || '',
+          duration: mediaPlayerStore.currentTrack?.duration || 0,
+          isPlaying: mediaPlayerStore.isPlaying,
+          elapsed: 0,
+        });
+
         break;
       case 'music-controls-previous':
         // previous
+        await mediaPlayerStore.prev();
+        await updateMetadata({
+          track: mediaPlayerStore.currentTrack?.title || 'Unknown',
+          artist: mediaPlayerStore.currentTrack?.artist || 'Unknown',
+          album: mediaPlayerStore.currentTrack?.album || 'Unknown',
+          cover: mediaPlayerStore.currentTrack?.coverPath || '',
+          duration: mediaPlayerStore.currentTrack?.duration || 0,
+          isPlaying: mediaPlayerStore.isPlaying,
+          elapsed: 0,
+        });
+
         break;
       case 'music-controls-pause':
         // paused

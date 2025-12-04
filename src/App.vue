@@ -32,7 +32,7 @@ onMounted(async () => {
 
   // Init media player
   if (mediaPlayerStore.currentTrack) {
-    mediaPlayerStore.init();
+    mediaPlayerStore.loadAudio();
   }
 });
 </script>

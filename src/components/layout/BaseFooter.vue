@@ -5,6 +5,7 @@ import { useMediaPlayerStore } from 'src/stores/media-player';
 import { Capacitor } from '@capacitor/core';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { ref } from 'vue';
+import { formatSecondsToMMSS } from 'src/utils/format-seconds';
 
 const mediaPlayerStore = useMediaPlayerStore();
 const mediaControlsStore = useMediaControlsStore();
@@ -131,9 +132,24 @@ const playPauseTrack = async () => {
           v-show="showPlayerInFullscreen"
           class="w-full flex flex-nowrap gap-4 items-center px-2"
         >
-          <span class="text-xs">0:12</span>
-          <QSlider :model-value="12" color="white" track-color="grey-8" class="grow"> </QSlider>
-          <span class="text-xs">3:21</span>
+          <span class="text-xs">{{ formatSecondsToMMSS(mediaPlayerStore.elapsedTime) }}</span>
+          <QSlider
+            :model-value="mediaPlayerStore.elapsedTime"
+            color="white"
+            track-color="grey-8"
+            class="grow"
+            @change="
+              (val) =>
+                mediaControlsStore.executeAction({
+                  message: 'music-controls-seek-to',
+                  position: val * 1000,
+                })
+            "
+          >
+          </QSlider>
+          <span class="text-xs">{{
+            formatSecondsToMMSS((mediaPlayerStore.currentTrack?.duration ?? 0) / 1000)
+          }}</span>
         </div>
         <div
           class="flex items-center gap-3 shrink-0"
@@ -157,7 +173,12 @@ const playPauseTrack = async () => {
             dense
             class="text-xs order-2"
             :class="{ '!text-2xl transition-all ': showPlayerInFullscreen }"
-            @click.stop=""
+            @click.stop="
+              mediaControlsStore.executeAction({
+                message: 'music-controls-previous',
+                position: 0,
+              })
+            "
           />
           <QBtn
             icon="skip_next"
@@ -166,7 +187,12 @@ const playPauseTrack = async () => {
             dense
             class="text-xs order-3"
             :class="{ '!text-2xl transition-all ': showPlayerInFullscreen }"
-            @click.stop=""
+            @click.stop="
+              mediaControlsStore.executeAction({
+                message: 'music-controls-next',
+                position: 0,
+              })
+            "
           />
           <div v-show="!showPlayerInFullscreen" class="bg-white grow mx-1 h-8 w-0.5 order-4"></div>
           <QBtn

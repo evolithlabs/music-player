@@ -88,14 +88,16 @@ const tracks = ref([
                 <QVirtualScroll :items="tracks" v-slot="{ index }">
                   <QItem :key="index" dense class="p-2 border-b">
                     <TrackItem
-                      title="Washed Up"
-                      album="Fear"
-                      artist="NF"
-                      cover-path=""
-                      path=""
-                      :duration="500"
-                      :id="22"
-                      :year="2001"
+                      :track="{
+                        id: 22,
+                        title: 'Washed Up',
+                        album: 'Fear',
+                        artist: 'NF',
+                        coverPath: '',
+                        path: '',
+                        duration: 500,
+                        year: 2001,
+                      }"
                     ></TrackItem>
                   </QItem>
                 </QVirtualScroll>
