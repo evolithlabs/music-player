@@ -45,34 +45,34 @@ const showTrackOptions = () => {
     class: 'bg-black text-white border-t',
     actions: [
       {
-        icon: 'play_arrow',
+        icon: 'bi-play-fill',
         label: 'Play song',
         value: 'play',
       },
       {
-        icon: 'visibility',
+        icon: 'bi-eye-fill',
         label: 'More details',
         value: 'details',
       },
       {
-        icon: 'person_2',
+        icon: 'bi-person-fill',
         label: 'Go to artist',
         value: 'artist',
       },
       {
-        icon: 'album',
+        icon: 'bi-vinyl-fill',
         label: 'Go to album',
         value: 'album',
       },
       {
-        icon: 'download',
-        label: 'Download now',
-        value: 'download',
-      },
-      {
-        icon: 'library_add',
+        icon: 'bi-plus-square-fill',
         label: 'Add to library',
         value: 'library',
+      },
+      {
+        icon: 'bi-download',
+        label: 'Download now',
+        value: 'download',
       },
     ],
   }).onOk((value) => {
@@ -97,8 +97,8 @@ const showTrackOptions = () => {
       <QBtn
         :icon="
           mediaPlayerStore.currentTrack?.id == track.id && mediaPlayerStore.isPlaying
-            ? 'pause'
-            : 'play_arrow'
+            ? 'bi-pause-fill'
+            : 'bi-play-fill'
         "
         flat
         class="text-xs absolute top-0 left-0 right-0 bottom-0"
@@ -116,8 +116,15 @@ const showTrackOptions = () => {
       </div>
     </div>
     <div class="flex items-baseline ml-auto shrink-0">
-      <QBtn icon="download" round color="white" flat class="text-xs" />
-      <QBtn icon="more_vert" round color="white" flat class="text-xs" @click="showTrackOptions" />
+      <QBtn icon="bi-download" round color="white" flat class="text-xs" />
+      <QBtn
+        icon="bi-three-dots-vertical"
+        round
+        color="white"
+        flat
+        class="text-xs"
+        @click="showTrackOptions"
+      />
     </div>
   </div>
 </template>

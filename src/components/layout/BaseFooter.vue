@@ -26,25 +26,25 @@ const mediaControlsStore = useMediaControlsStore();
 const leftLinks = [
   {
     title: 'Home',
-    icon: 'home',
+    icon: 'bi-house',
     to: '/',
   },
   {
     title: 'Library',
-    icon: 'library_music',
+    icon: 'bi-collection-play',
     to: '/library',
   },
 ];
 
 const rightLinks = [
   {
-    title: 'Stream',
-    icon: 'podcasts',
-    to: '/stream',
+    title: 'Spotify',
+    icon: 'bi-spotify',
+    to: '/spotify-library',
   },
   {
     title: 'Library',
-    icon: 'settings',
+    icon: 'bi-gear',
     to: '/settings',
   },
 ];
@@ -94,7 +94,7 @@ const playPauseTrack = async () => {
 
         <div class="flex items-center gap-3 shrink-0 ml-auto">
           <QBtn
-            icon="skip_previous"
+            icon="bi-skip-start"
             flat
             round
             dense
@@ -107,7 +107,7 @@ const playPauseTrack = async () => {
             "
           />
           <QBtn
-            icon="skip_next"
+            icon="bi-skip-end"
             flat
             round
             dense
@@ -121,7 +121,7 @@ const playPauseTrack = async () => {
           />
           <div class="bg-white grow mx-1 h-8 w-0.5 order-4"></div>
           <QBtn
-            :icon="mediaPlayerStore.isPlaying ? 'pause' : 'play_arrow'"
+            :icon="mediaPlayerStore.isPlaying ? 'bi-pause-fill' : 'bi-play-fill'"
             round
             dense
             class="text-xs order-5"
@@ -146,7 +146,7 @@ const playPauseTrack = async () => {
           class="flex flex-nowrap items-center justify-between gap-4 w-full mb-8"
         >
           <QBtn
-            icon="arrow_back"
+            icon="bi-arrow-left"
             dense
             round
             flat
@@ -158,7 +158,7 @@ const playPauseTrack = async () => {
             <QTab name="track" label="Track" />
             <QTab name="lyrics" label="Lyrics" />
           </QTabs>
-          <QBtn icon="more_vert" dense round flat class="shrink-0"></QBtn>
+          <QBtn icon="bi-three-dots-vertical" dense round flat class="shrink-0"></QBtn>
         </div>
 
         <div class="flex flex-col flex-nowrap gap-8 grow">
@@ -298,14 +298,14 @@ He started this fire (is this what You wanted, what You wanted?)
           <div class="flex items-center justify-evenly gap-3 shrink-0">
             <QBtn
               v-show="showPlayerInFullscreen"
-              icon="shuffle"
+              icon="bi-shuffle"
               flat
               round
               dense
               class="text-md order-1"
             />
             <QBtn
-              icon="skip_previous"
+              icon="bi-skip-start"
               flat
               round
               dense
@@ -318,14 +318,14 @@ He started this fire (is this what You wanted, what You wanted?)
               "
             />
             <QBtn
-              :icon="mediaPlayerStore.isPlaying ? 'pause' : 'play_arrow'"
+              :icon="mediaPlayerStore.isPlaying ? 'bi-pause-fill' : 'bi-play-fill'"
               round
               dense
               class="text-2xl order-2 ring ring-white"
               @click.stop="playPauseTrack"
             />
             <QBtn
-              icon="skip_next"
+              icon="bi-skip-end"
               flat
               round
               dense
@@ -339,7 +339,7 @@ He started this fire (is this what You wanted, what You wanted?)
             />
             <QBtn
               v-show="showPlayerInFullscreen"
-              icon="repeat"
+              icon="bi-repeat"
               flat
               round
               dense
@@ -369,7 +369,7 @@ He started this fire (is this what You wanted, what You wanted?)
           ratio="1"
           style="border-radius: 50%"
         />
-        <QIcon v-show="!mediaPlayerStore.isPlaying" name="blur_on" class="absolute" />
+        <QIcon v-show="!mediaPlayerStore.isPlaying" name="bi-claude" class="absolute" />
         <QSpinnerBars size="xs" v-show="mediaPlayerStore.isPlaying" class="absolute" />
       </QBtn>
       <!-- <QBtn

@@ -1,8 +1,8 @@
 <template>
-  <QPage class="flex flex-col text-white pt-header pb-footer">
+  <QPage class="flex flex-col text-white pb-footer pt-4">
     <div>
       <h1 class="text-3xl flex items-center gap-2 font-bold px-2">
-        <QIcon name="graphic_eq" class="text-4xl" />
+        <QIcon name="bi-soundwave" class="text-4xl" />
         Groovio Player
       </h1>
     </div>

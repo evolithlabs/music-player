@@ -1,6 +1,6 @@
 <template>
   <QLayout view="hHh Lpr fFf" class="bg-zinc-800">
-    <BaseHeader></BaseHeader>
+    <!-- <BaseHeader></BaseHeader> -->
     <BaseFooter class="z-[9999]"></BaseFooter>
 
     <QPageContainer class="!py-0">
@@ -12,5 +12,4 @@
 <script setup lang="ts">
 import { QLayout, QPageContainer } from 'quasar';
 import BaseFooter from 'src/components/layout/BaseFooter.vue';
-import BaseHeader from 'src/components/layout/BaseHeader.vue';
 </script>

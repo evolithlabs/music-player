@@ -35,11 +35,11 @@ const tracks = ref([
     class="bg-transparent flex justify-between items-center p-2 fixed top-0 left-0 right-0 h-16 z-50"
   >
     <div class="bg-glass p-1">
-      <QBtn icon="menu" round flat ripple class="text-xs"></QBtn>
-      <QBtn icon="search" round flat ripple class="text-xs" @click="searchDialog = true" />
+      <QBtn icon="bi-list" round flat ripple class="text-xs"></QBtn>
+      <QBtn icon="bi-search" round flat ripple class="text-xs" @click="searchDialog = true" />
     </div>
     <div class="bg-glass p-1">
-      <QBtn icon="notifications" round flat ripple class="text-xs" />
+      <QBtn icon="bi-bell" round flat ripple class="text-xs" />
     </div>
 
     <QDialog
@@ -58,7 +58,7 @@ const tracks = ref([
       >
         <div class="sticky top-0 z-30 pt-4 px-4">
           <div class="flex items-center gap-2">
-            <QBtn icon="arrow_back" color="white" dense flat v-close-popup />
+            <QBtn icon="bi-arrow-left" color="white" dense flat v-close-popup />
 
             <QInput
               v-model="searchQuery"
@@ -73,7 +73,7 @@ const tracks = ref([
               }"
               class="grow bg-glass !bg-zinc-800 search-input"
             />
-            <QBtn icon="more_vert" color="white" dense flat />
+            <QBtn icon="bi-three-dots-vertical" color="white" dense flat />
           </div>
           <div class="mt-4">
             <QTabs v-model="tab" dense :narrow-indicator="true" class="text-white">

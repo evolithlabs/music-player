@@ -14,6 +14,12 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/spotify-library',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/SpotifyLibraryPage.vue') }],
+  },
+
+  {
     path: '/spotify-callback',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/SpotifyCallbackPage.vue') }],
