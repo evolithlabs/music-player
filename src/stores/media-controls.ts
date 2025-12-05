@@ -79,7 +79,7 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
     switch (event.message) {
       case 'music-controls-next':
         // next
-        await mediaPlayerStore.prev();
+        await mediaPlayerStore.next();
         await updateMetadata({
           track: mediaPlayerStore.currentTrack?.title || 'Unknown',
           artist: mediaPlayerStore.currentTrack?.artist || 'Unknown',

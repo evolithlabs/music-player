@@ -4,7 +4,7 @@ import { MediaScanner } from '../../../capacitor-plugins/capacitor-mediastore/di
 import type { Track } from 'src/types/tracks';
 
 export const useMediaLibraryStore = defineStore('media-library', () => {
-  const tracks = ref<Track[]>();
+  const tracks = ref<Track[]>([]);
 
   const scanTracks = async () => {
     const permissions = await MediaScanner.requestPermissions();

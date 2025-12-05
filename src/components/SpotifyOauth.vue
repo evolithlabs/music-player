@@ -41,7 +41,7 @@ const authenticate = async () => {
 
   setTimeout(() => {
     isAuthenticating.value = false;
-  }, 3000);
+  }, 1000);
 };
 </script>
 

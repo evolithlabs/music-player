@@ -17,6 +17,7 @@
   "dependencies": {
     "@mediagrid/capacitor-native-audio": "^2.3.1",
     "@quasar/extras": "^1.16.4",
+    "axios": "^1.13.2",
     "capacitor-mediastore": "link:..\\capacitor-plugins\\capacitor-mediastore",
     "capacitor-music-controls-plugin": "github:DaniZGit/capacitor-music-controls-plugin-fork",
     "js-sha256": "^0.11.1",

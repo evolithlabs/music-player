@@ -65,10 +65,10 @@ const playPauseTrack = async () => {
 </script>
 
 <template>
-  <QFooter class="flex flex-col gap-1.5 justify-end bg-transparent h-32 !z-[6000]">
+  <QFooter class="flex flex-col gap-1.5 justify-end bg-transparent h-footer !z-[6000]">
     <!-- Media Player -->
     <div
-      class="flex flex-col mx-2 px-1 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
+      class="flex flex-col mx-2 p-2 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
       @click="toggleFullscreenPlayerVisibility"
     >
       <div class="flex flex-nowrap items-center p-2">
@@ -81,7 +81,7 @@ const playPauseTrack = async () => {
           position="cover"
           ratio="1"
           no-transition
-          class="h-full w-auto aspect-square rounded-md mr-3"
+          class="h-full w-auto aspect-square rounded-md mr-3 shrink-0"
         />
         <div class="flex flex-col">
           <h5 class="text-base font-bold line-clamp-1">
@@ -92,13 +92,13 @@ const playPauseTrack = async () => {
           </span>
         </div>
 
-        <div class="flex items-center gap-3 shrink-0 ml-auto">
+        <div class="flex items-center gap-0 shrink-0 ml-auto">
           <QBtn
             icon="bi-skip-start"
             flat
             round
             dense
-            class="text-xs order-2"
+            class="text-sm order-2"
             @click.stop="
               mediaControlsStore.executeAction({
                 message: 'music-controls-previous',
@@ -111,7 +111,7 @@ const playPauseTrack = async () => {
             flat
             round
             dense
-            class="text-xs order-3"
+            class="text-sm order-3"
             @click.stop="
               mediaControlsStore.executeAction({
                 message: 'music-controls-next',
@@ -119,12 +119,12 @@ const playPauseTrack = async () => {
               })
             "
           />
-          <div class="bg-white grow mx-1 h-8 w-0.5 order-4"></div>
+          <div class="bg-white grow mx-2 h-8 w-0.5 order-4"></div>
           <QBtn
             :icon="mediaPlayerStore.isPlaying ? 'bi-pause-fill' : 'bi-play-fill'"
             round
             dense
-            class="text-xs order-5"
+            class="text-sm order-5"
             @click.stop="playPauseTrack"
           />
         </div>

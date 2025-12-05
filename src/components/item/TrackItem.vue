@@ -4,6 +4,7 @@ import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import type { Track } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
+import { formatSecondsToMMSS } from 'src/utils/format-seconds';
 
 const { track, queue } = defineProps<{
   track: Track;
@@ -29,9 +30,10 @@ const playPauseTrack = async () => {
       track: track.title,
       artist: track.artist,
       album: track.album,
-      cover: track.coverPath,
+      cover: track.coverPath ?? '/images/background-cover.jpg',
       duration: track.duration,
       isPlaying: true,
+      elapsed: 0,
     });
   }
 };
@@ -112,7 +114,7 @@ const showTrackOptions = () => {
       <div class="flex items-center gap-1">
         <span class="text-xs line-clamp-1">{{ track.artist }}</span>
         <span>•</span>
-        <span class="text-xs">3:31</span>
+        <span class="text-xs">{{ formatSecondsToMMSS(track.duration) }}</span>
       </div>
     </div>
     <div class="flex items-baseline ml-auto shrink-0">

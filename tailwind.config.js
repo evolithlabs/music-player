@@ -5,11 +5,15 @@ module.exports = {
     extend: {
       padding: {
         header: '4rem',
-        footer: '8rem',
+        footer: '9rem',
       },
       margin: {
         header: '4rem',
-        footer: '8rem',
+        footer: '9rem',
+      },
+      height: {
+        header: '4rem',
+        footer: '9rem',
       },
     },
   },

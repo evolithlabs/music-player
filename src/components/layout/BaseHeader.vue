@@ -90,7 +90,7 @@ const tracks = ref([
                   <QItem :key="index" dense class="p-2 border-b">
                     <TrackItem
                       :track="{
-                        id: 22,
+                        id: '22',
                         title: 'Washed Up',
                         album: 'Fear',
                         artist: 'NF',
