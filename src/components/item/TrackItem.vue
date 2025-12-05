@@ -6,37 +6,14 @@ import type { Track } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 import { formatSecondsToMMSS } from 'src/utils/format-seconds';
 
-const { track, queue } = defineProps<{
+const { track, queue, type } = defineProps<{
   track: Track;
   queue?: Track[];
+  type?: 'local' | 'spotify';
 }>();
 
 const mediaPlayerStore = useMediaPlayerStore();
 const mediaControlsStore = useMediaControlsStore();
-
-const playPauseTrack = async () => {
-  if (mediaPlayerStore.currentTrack?.id == track.id) {
-    // toggle play/pause
-    await mediaControlsStore.executeAction({
-      message: 'music-controls-toggle-play-pause',
-      position: 0,
-    });
-  } else {
-    await mediaPlayerStore.loadAndPlayTracks(track, queue ?? [track], {
-      type: 'misc',
-    });
-
-    await mediaControlsStore.updateMetadata({
-      track: track.title,
-      artist: track.artist,
-      album: track.album,
-      cover: track.coverPath ?? '/images/background-cover.jpg',
-      duration: track.duration,
-      isPlaying: true,
-      elapsed: 0,
-    });
-  }
-};
 
 const $q = useQuasar();
 const showTrackOptions = () => {
@@ -46,11 +23,6 @@ const showTrackOptions = () => {
     dark: true,
     class: 'bg-black text-white border-t',
     actions: [
-      {
-        icon: 'bi-play-fill',
-        label: 'Play song',
-        value: 'play',
-      },
       {
         icon: 'bi-eye-fill',
         label: 'More details',
@@ -76,10 +48,46 @@ const showTrackOptions = () => {
         label: 'Download now',
         value: 'download',
       },
+      {
+        icon: 'bi-trash-fill',
+        label: 'Delete track',
+        value: 'play',
+        classes: 'text-red-400',
+      },
     ],
   }).onOk((value) => {
     console.log('Option selected:', value);
   });
+};
+
+const onCoverClick = async () => {
+  if (type == 'local') {
+    await playPauseTrack();
+  }
+};
+
+const playPauseTrack = async () => {
+  if (mediaPlayerStore.currentTrack?.id == track.id) {
+    // toggle play/pause
+    await mediaControlsStore.executeAction({
+      message: 'music-controls-toggle-play-pause',
+      position: 0,
+    });
+  } else {
+    await mediaPlayerStore.loadAndPlayTracks(track, queue ?? [track], {
+      type: 'misc',
+    });
+
+    await mediaControlsStore.updateMetadata({
+      track: track.title,
+      artist: track.artist,
+      album: track.album,
+      cover: track.coverPath ?? '/images/background-cover.jpg',
+      duration: track.duration,
+      isPlaying: true,
+      elapsed: 0,
+    });
+  }
 };
 </script>
 
@@ -97,14 +105,10 @@ const showTrackOptions = () => {
         ratio="1"
       />
       <QBtn
-        :icon="
-          mediaPlayerStore.currentTrack?.id == track.id && mediaPlayerStore.isPlaying
-            ? 'bi-pause-fill'
-            : 'bi-play-fill'
-        "
+        :icon="type == 'local' ? 'bi-play-fill' : 'bi-download'"
         flat
         class="text-xs absolute top-0 left-0 right-0 bottom-0"
-        @click="playPauseTrack"
+        @click="onCoverClick"
       />
     </QAvatar>
     <div class="flex flex-col mr-4">
@@ -118,7 +122,6 @@ const showTrackOptions = () => {
       </div>
     </div>
     <div class="flex items-baseline ml-auto shrink-0">
-      <QBtn icon="bi-download" round color="white" flat class="text-xs" />
       <QBtn
         icon="bi-three-dots-vertical"
         round

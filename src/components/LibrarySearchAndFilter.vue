@@ -17,6 +17,7 @@ import type { Track } from 'src/types/tracks';
 const { tracks, loading } = defineProps<{
   tracks: Track[];
   loading?: boolean | undefined;
+  type: 'local' | 'spotify';
 }>();
 
 const queryModel = defineModel<string>('query', {
@@ -63,7 +64,7 @@ const tabModel = defineModel<LibraryTab>('tab', {
           v-slot="{ item, index }"
         >
           <QItem :key="index" dense class="pt-2 px-2">
-            <TrackItem v-if="tracks" :track="item" :queue="tracks"></TrackItem>
+            <TrackItem v-if="tracks" :track="item" :queue="tracks" :type="type"></TrackItem>
             <TrackItem
               v-else
               :track="{
@@ -76,6 +77,7 @@ const tabModel = defineModel<LibraryTab>('tab', {
                 duration: 500,
                 year: 2001,
               }"
+              :type="type"
             ></TrackItem>
           </QItem>
         </QVirtualScroll>

@@ -13,6 +13,7 @@
       v-model:query="searchQuery"
       v-model:tab="tab"
       :tracks="tracks"
+      type="local"
     ></LibrarySearchAndFilter>
   </QPage>
 </template>

@@ -30,6 +30,7 @@
         v-model:query="searchQuery"
         v-model:tab="tab"
         :tracks="tracks"
+        type="spotify"
         :loading="fetchingData"
         @update:query="fetchTracks"
       ></LibrarySearchAndFilter>
