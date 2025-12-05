@@ -173,6 +173,7 @@ export const useSpotifyAuthStore = defineStore(
       codeVerifier,
       authenticate,
       generateAccessToken,
+      validateAccessToken,
     };
   },
   {

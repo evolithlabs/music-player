@@ -45,7 +45,7 @@ const rightLinks = [
   {
     title: 'Library',
     icon: 'bi-gear',
-    to: '/settings',
+    to: '/spotify-callback',
   },
 ];
 

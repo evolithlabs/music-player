@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { QBtn, QCard, QInnerLoading, QSpinnerAudio } from 'quasar';
+import { QBtn, QCard, QSpinnerBars } from 'quasar';
 import { useSpotifyAuthStore } from 'src/stores/spotify-auth';
 import { onMounted, ref } from 'vue';
 
@@ -35,44 +35,50 @@ const authenticate = async () => {
 
   try {
     await spotifyAuthStore.generateAccessToken(code);
-    isAuthenticating.value = false;
   } catch (error) {
     console.error('Something went wrong while trying to authenticate to spotify', error);
   }
+
+  setTimeout(() => {
+    isAuthenticating.value = false;
+  }, 3000);
 };
 </script>
 
 <template>
-  <QCard class="column content-center text-center q-pa-md">
+  <QCard
+    flat
+    class="flex flex-col gap-4 text-center px-4 py-8 bg-glass text-white !rounded-md grow"
+  >
     <template v-if="state == 'user-authorization'">
-      <h5 class="text-weight-medium q-mb-lg q-mt-none">Login with Spotify</h5>
-      <p class="text-body2">Sign in to search and play music using your Spotify account.</p>
-      <QBtn label="Connect" color="green" rounded @click="loginWithSpotify"></QBtn>
+      <h5 class="font-bold text-xl">Login to Spotify</h5>
+      <p class="text-sm">Sign in to search and play music using your Spotify account.</p>
 
-      <QInnerLoading :showing="isAuthorizing" />
+      <QSpinnerBars v-if="isAuthorizing" size="lg" color="green" class="mx-auto" />
+      <QBtn
+        v-else
+        label="Connect"
+        color="green"
+        icon="bi-spotify"
+        rounded
+        @click="loginWithSpotify"
+      ></QBtn>
     </template>
 
     <template v-else>
-      <h5 class="text-weight-medium q-mb-lg q-mt-none">
+      <h5 class="font-bold text-xl">
         <template v-if="isAuthenticating"> Logging to Spotify... </template>
         <template v-else> Logged in! </template>
       </h5>
-      <p class="text-body2 q-px-sm">
+      <p class="text-sm">
         <template v-if="isAuthenticating"> sit tight! It will take a couple of seconds. </template>
         <template v-else>
           You can now freely search any Spotify song, artist or albums you like!
         </template>
       </p>
 
-      <QSpinnerAudio v-if="isAuthenticating" size="xl" color="green" />
-
-      <QBtn
-        v-if="!isAuthenticating"
-        label="Close"
-        color="green"
-        rounded
-        @click="emit('close')"
-      ></QBtn>
+      <QSpinnerBars v-if="isAuthenticating" size="lg" color="green" class="mx-auto" />
+      <QBtn v-else label="Close" color="green" rounded @click="emit('close')"></QBtn>
     </template>
   </QCard>
 </template>
