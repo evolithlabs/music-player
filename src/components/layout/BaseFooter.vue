@@ -277,7 +277,7 @@ He started this fire (is this what You wanted, what You wanted?)
             <QSlider
               :model-value="mediaPlayerStore.elapsedTime"
               :min="0"
-              :max="(mediaPlayerStore.currentTrack?.duration ?? 0) / 1000"
+              :max="mediaPlayerStore.currentTrack?.duration ?? 0"
               color="white"
               track-color="grey-8"
               class="grow"
@@ -291,7 +291,7 @@ He started this fire (is this what You wanted, what You wanted?)
             >
             </QSlider>
             <span class="text-xs">
-              {{ formatSecondsToMMSS((mediaPlayerStore.currentTrack?.duration ?? 0) / 1000) }}
+              {{ formatSecondsToMMSS(mediaPlayerStore.currentTrack?.duration ?? 0) }}
             </span>
           </div>
 
