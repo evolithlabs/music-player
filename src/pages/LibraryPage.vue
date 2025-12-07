@@ -31,9 +31,7 @@ const searchQuery = ref<string>('');
 const tab = ref<LibraryTab>('tracks');
 
 const tracks = computed(() => {
-  return mediaLibraryStore.tracks?.map((t) => {
-    return { ...t, duration: Math.floor(t.duration / 1000) };
-  });
+  return mediaLibraryStore.tracks;
 });
 </script>
 

@@ -96,7 +96,7 @@ const tracks = ref([
                         artist: 'NF',
                         coverPath: '',
                         path: '',
-                        duration: 500,
+                        duration: 500000,
                         year: 2001,
                       }"
                     ></TrackItem>

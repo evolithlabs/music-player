@@ -18,7 +18,7 @@ import { useMediaPlayerStore } from 'src/stores/media-player';
 import { Capacitor } from '@capacitor/core';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { ref } from 'vue';
-import { formatSecondsToMMSS } from 'src/utils/format-seconds';
+import { formatMsToMMSS } from 'src/utils/format-ms-to-mmss';
 
 const mediaPlayerStore = useMediaPlayerStore();
 const mediaControlsStore = useMediaControlsStore();
@@ -273,7 +273,7 @@ He started this fire (is this what You wanted, what You wanted?)
             v-show="showPlayerInFullscreen"
             class="w-full flex flex-nowrap gap-4 items-center px-2 mt-auto"
           >
-            <span class="text-xs">{{ formatSecondsToMMSS(mediaPlayerStore.elapsedTime) }}</span>
+            <span class="text-xs">{{ formatMsToMMSS(mediaPlayerStore.elapsedTime) }}</span>
             <QSlider
               :model-value="mediaPlayerStore.elapsedTime"
               :min="0"
@@ -285,13 +285,13 @@ He started this fire (is this what You wanted, what You wanted?)
                 (val) =>
                   mediaControlsStore.executeAction({
                     message: 'music-controls-seek-to',
-                    position: val * 1000,
+                    position: val,
                   })
               "
             >
             </QSlider>
             <span class="text-xs">
-              {{ formatSecondsToMMSS(mediaPlayerStore.currentTrack?.duration ?? 0) }}
+              {{ formatMsToMMSS(mediaPlayerStore.currentTrack?.duration ?? 0) }}
             </span>
           </div>
 

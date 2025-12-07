@@ -119,7 +119,7 @@ const fetchTracks = async () => {
         title: spotifyTrack.name ?? 'Unknown Title',
         artist: spotifyTrack.artists?.map((artist) => artist.name).join(', ') ?? 'Unknown Artist',
         album: spotifyTrack.album?.name ?? 'Unknown Album',
-        duration: Math.floor((spotifyTrack.duration_ms ?? 0) / 1000),
+        duration: spotifyTrack.duration_ms ?? 0,
         coverPath: spotifyTrack.album?.images?.at(0)?.url || '/images/background-cover.jpg',
         year: spotifyTrack.album?.release_date
           ? parseInt(spotifyTrack?.album?.release_date?.split('-').at(0) ?? '0')

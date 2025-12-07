@@ -46,7 +46,7 @@ export const useMediaPlayerStore = defineStore(
       audio.load();
 
       // Set current time
-      audio.currentTime = elapsedTime.value;
+      audio.currentTime = elapsedTime.value / 1000;
 
       // Listen to audio events
       audio.onplay = () => (isPlaying.value = true);
@@ -54,7 +54,7 @@ export const useMediaPlayerStore = defineStore(
       audio.onended = () => (isPlaying.value = false);
 
       audio.ontimeupdate = () => {
-        elapsedTime.value = audio.currentTime;
+        elapsedTime.value = audio.currentTime * 1000;
       };
     };
 
@@ -111,8 +111,8 @@ export const useMediaPlayerStore = defineStore(
       await play();
     };
 
-    const seekTo = (position: number) => {
-      audio.currentTime = position;
+    const seekTo = (seconds: number) => {
+      audio.currentTime = seconds;
     };
 
     return {

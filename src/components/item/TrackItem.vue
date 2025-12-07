@@ -4,7 +4,7 @@ import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import type { Track, TrackDownloadStatus } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
-import { formatSecondsToMMSS } from 'src/utils/format-seconds';
+import { formatMsToMMSS } from 'src/utils/format-ms-to-mmss';
 import { computed } from 'vue';
 
 const { track, queue, type, downloadStatus } = defineProps<{
@@ -139,7 +139,7 @@ const playPauseTrack = async () => {
       <div class="flex items-center gap-1">
         <span class="text-xs line-clamp-1">{{ track.artist }}</span>
         <span>•</span>
-        <span class="text-xs">{{ formatSecondsToMMSS(track.duration) }}</span>
+        <span class="text-xs">{{ formatMsToMMSS(track.duration) }}</span>
       </div>
     </div>
     <div class="flex items-baseline ml-auto shrink-0">
