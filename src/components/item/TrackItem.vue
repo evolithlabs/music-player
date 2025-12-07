@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { QAvatar, QBtn, QImg, useQuasar } from 'quasar';
+import { QBtn, QImg, QSpinner, useQuasar } from 'quasar';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
-import type { Track } from 'src/types/tracks';
+import type { Track, TrackDownloadStatus } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 import { formatSecondsToMMSS } from 'src/utils/format-seconds';
+import { computed } from 'vue';
 
-const { track, queue, type } = defineProps<{
+const { track, queue, type, downloadStatus } = defineProps<{
   track: Track;
   queue?: Track[];
   type?: 'local' | 'spotify';
+  downloadStatus?: TrackDownloadStatus;
 }>();
 
 const mediaPlayerStore = useMediaPlayerStore();
@@ -60,9 +62,21 @@ const showTrackOptions = () => {
   });
 };
 
-const onCoverClick = async () => {
+const imageButtonIcon = computed(() => {
+  if (type == 'local' || downloadStatus == 'completed') return 'bi-play-fill';
+  return 'bi-cloud-arrow-down-fill';
+});
+
+const onImageButtonClick = async () => {
   if (type == 'local') {
     await playPauseTrack();
+  } else {
+    if (downloadStatus == 'completed') {
+      await playPauseTrack();
+    } else {
+      // queue track for download
+      console.log('queuing for download');
+    }
   }
 };
 
@@ -93,7 +107,7 @@ const playPauseTrack = async () => {
 
 <template>
   <div class="flex flex-nowrap items-center grow text-white rounded-md">
-    <QAvatar rounded class="mr-3 relative">
+    <div class="mr-3 relative rounded-md overflow-hidden">
       <QImg
         :src="
           track.coverPath
@@ -104,13 +118,20 @@ const playPauseTrack = async () => {
         position="cover"
         ratio="1"
       />
+      <div
+        v-if="downloadStatus == 'downloading'"
+        class="text-xl absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center"
+      >
+        <QSpinner color="white" size="md" />
+      </div>
       <QBtn
-        :icon="type == 'local' ? 'bi-play-fill' : 'bi-download'"
+        v-else
+        :icon="imageButtonIcon"
         flat
         class="text-xs absolute top-0 left-0 right-0 bottom-0"
-        @click="onCoverClick"
+        @click="onImageButtonClick"
       />
-    </QAvatar>
+    </div>
     <div class="flex flex-col mr-4">
       <h6 class="font-bold line-clamp-1 text-sm">
         {{ track.title }}

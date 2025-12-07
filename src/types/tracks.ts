@@ -8,3 +8,5 @@ export interface Track {
   duration: number; // duration in seconds
   path: string;
 }
+
+export type TrackDownloadStatus = 'queued' | 'downloading' | 'completed' | 'failed';

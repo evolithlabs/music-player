@@ -3,6 +3,7 @@ import type { SpotifyAccessTokenResponse } from 'src/types/spotify';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { sha256 as jsSha256 } from 'js-sha256';
 import { Capacitor } from '@capacitor/core';
+import { useQuasar } from 'quasar';
 
 export const useSpotifyAuthStore = defineStore(
   'spotify-auth',
@@ -19,6 +20,8 @@ export const useSpotifyAuthStore = defineStore(
     const expiresIn = ref<number>();
     const expiresAt = ref<number>();
     let refreshTimeout: NodeJS.Timeout | undefined;
+
+    const $q = useQuasar();
 
     const generateRandomString = (length: number) => {
       const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -92,7 +95,11 @@ export const useSpotifyAuthStore = defineStore(
         }
       } catch (error) {
         console.error('Something went wrong while generating access token', error);
-        throw error;
+        $q.notify({
+          type: 'negative',
+          message: 'Something went wrong while generating access token',
+          caption: (error as Error).message,
+        });
       }
     };
 
@@ -112,16 +119,24 @@ export const useSpotifyAuthStore = defineStore(
         }),
       };
 
-      const body = await fetch(url, payload);
-      const response = (await body.json()) as Partial<SpotifyAccessTokenResponse>;
+      try {
+        const body = await fetch(url, payload);
+        const response = (await body.json()) as Partial<SpotifyAccessTokenResponse>;
 
-      accessToken.value = response.access_token;
-      refreshToken.value = response.refresh_token;
-      expiresIn.value = response.expires_in;
+        accessToken.value = response.access_token;
+        refreshToken.value = response.refresh_token;
+        expiresIn.value = response.expires_in;
 
-      if (response.expires_in) {
-        expiresAt.value = Date.now() + response.expires_in * 1000;
-        scheduleTokenRefresh(response.expires_in);
+        if (response.expires_in) {
+          expiresAt.value = Date.now() + response.expires_in * 1000;
+          scheduleTokenRefresh(response.expires_in);
+        }
+      } catch (error) {
+        $q.notify({
+          type: 'negative',
+          message: 'Failed to validate Spotify access token',
+          caption: (error as Error).message,
+        });
       }
     };
 

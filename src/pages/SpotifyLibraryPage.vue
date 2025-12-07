@@ -31,9 +31,18 @@
         v-model:tab="tab"
         :tracks="tracks"
         type="spotify"
-        :loading="fetchingData"
+        :loading="fetchingTracks"
         @update:query="fetchTracks"
-      ></LibrarySearchAndFilter>
+      >
+        <template #track="{ track, queue, type }">
+          <TrackItem
+            :track="track"
+            :queue="queue"
+            :type="type"
+            :download-status="tracksDownloadStatuses[track.id] ?? 'downloading'"
+          ></TrackItem>
+        </template>
+      </LibrarySearchAndFilter>
     </div>
   </QPage>
 </template>
@@ -41,13 +50,15 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios';
 import { QBadge, QBtn, QIcon, QPage, QSpinnerBars, useQuasar } from 'quasar';
-import { spotifyApi } from 'src/boot/axios';
+import { backendApi, spotifyApi } from 'src/boot/axios';
 import LibrarySearchAndFilter from 'src/components/LibrarySearchAndFilter.vue';
 import SpotifyOauth from 'src/components/SpotifyOauth.vue';
+import TrackItem from 'src/components/item/TrackItem.vue';
 import { useSpotifyAuthStore } from 'src/stores/spotify-auth';
 import type { LibraryTab } from 'src/types/library';
 import type { SpotifyTrackResponse } from 'src/types/spotify';
-import type { Track } from 'src/types/tracks';
+import type { Track, TrackDownloadStatus } from 'src/types/tracks';
+import { getSpotifyTrackUrl } from 'src/utils/get-spotify-track-url';
 import { onMounted, ref } from 'vue';
 
 const spotifyAuthStore = useSpotifyAuthStore();
@@ -72,18 +83,22 @@ onMounted(async () => {
   await fetchTracks();
 });
 
-const tracks = ref<Track[]>([]);
 const searchQuery = ref<string>('');
 const tab = ref<LibraryTab>('tracks');
-const fetchingData = ref(false);
+
+const tracks = ref<Track[]>([]);
+const fetchingTracks = ref(false);
+const tracksDownloadStatuses = ref<Record<string, TrackDownloadStatus>>({});
+const fetchingTracksStatuses = ref(false);
 const fetchTracks = async () => {
   // Placeholder for fetching tracks from Spotify API
   let query = searchQuery.value.trim();
   if (!searchQuery.value) query = 'NF';
 
-  fetchingData.value = true;
   try {
-    const response = await spotifyApi.get<SpotifyTrackResponse>('/search', {
+    // Fetch spotify tracks
+    fetchingTracks.value = true;
+    const spotifyResponse = await spotifyApi.get<SpotifyTrackResponse>('/search', {
       params: {
         q: query,
         type: 'track',
@@ -97,7 +112,7 @@ const fetchTracks = async () => {
     });
 
     tracks.value = [];
-    response.data?.tracks?.items?.forEach((spotifyTrack) => {
+    spotifyResponse.data?.tracks?.items?.forEach((spotifyTrack) => {
       // Map SpotifyTrack to your Track type and add to tracks array
       const track: Track = {
         id: spotifyTrack.id ?? '-1',
@@ -109,20 +124,43 @@ const fetchTracks = async () => {
         year: spotifyTrack.album?.release_date
           ? parseInt(spotifyTrack?.album?.release_date?.split('-').at(0) ?? '0')
           : 0,
-        path: 'https://s3.ustatik.com/audio.com.audio/transcoding/44/10/1789421194991044-1789421197058588-1789421215373396.mp3?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=W7IA3NSYSOQIKLY9DEVC/20251205/eu-central-1/s3/aws4_request&X-Amz-Date=20251205T140755Z&X-Amz-SignedHeaders=host&X-Amz-Expires=518400&X-Amz-Signature=6bd9a12065943b42e83836a1d4e994f205c9ba9aa0d62e766c07e6f109a7b323',
+        path: getSpotifyTrackUrl(spotifyTrack.id ?? ''),
       };
 
       tracks.value.push(track);
     });
+    fetchingTracks.value = false;
+
+    // Fetch track statuses
+    fetchingTracksStatuses.value = true;
+    const backendResponse = await backendApi.get<Record<string, TrackDownloadStatus>>(
+      '/check-tracks',
+      {
+        params: {
+          ids: spotifyResponse.data?.tracks?.items
+            ?.map((spotifyTrack) => spotifyTrack.id)
+            .join(','),
+        },
+      },
+    );
+
+    for (const spotifyTrackId in backendResponse.data) {
+      const status = backendResponse.data[spotifyTrackId];
+      if (status) {
+        tracksDownloadStatuses.value[spotifyTrackId] = status;
+      }
+    }
+    fetchingTracksStatuses.value = true;
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch tracks from Spotify',
+      message: 'Something happened while fetching Spotify tracks',
       caption: (error as AxiosError).message,
     });
   }
 
-  fetchingData.value = false;
+  fetchingTracks.value = false;
+  fetchingTracksStatuses.value = false;
 };
 </script>
 

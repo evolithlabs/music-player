@@ -64,21 +64,9 @@ const tabModel = defineModel<LibraryTab>('tab', {
           v-slot="{ item, index }"
         >
           <QItem :key="index" dense class="pt-2 px-2">
-            <TrackItem v-if="tracks" :track="item" :queue="tracks" :type="type"></TrackItem>
-            <TrackItem
-              v-else
-              :track="{
-                id: '22',
-                title: 'Washed Up',
-                album: 'Fear',
-                artist: 'NF',
-                coverPath: '',
-                path: '',
-                duration: 500,
-                year: 2001,
-              }"
-              :type="type"
-            ></TrackItem>
+            <slot name="track" :track="item as Track" :queue="tracks" :type="type">
+              <TrackItem :track="item" :queue="tracks" :type="type"></TrackItem>
+            </slot>
           </QItem>
         </QVirtualScroll>
         <div v-else-if="loading" class="text-center mt-16">

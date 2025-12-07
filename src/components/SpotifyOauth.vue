@@ -33,11 +33,7 @@ const authenticate = async () => {
   if (!code) return;
   isAuthenticating.value = true;
 
-  try {
-    await spotifyAuthStore.generateAccessToken(code);
-  } catch (error) {
-    console.error('Something went wrong while trying to authenticate to spotify', error);
-  }
+  await spotifyAuthStore.generateAccessToken(code);
 
   setTimeout(() => {
     isAuthenticating.value = false;
