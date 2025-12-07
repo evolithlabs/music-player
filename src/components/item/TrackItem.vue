@@ -6,12 +6,18 @@ import type { Track, TrackDownloadStatus } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 import { formatMsToMMSS } from 'src/utils/format-ms-to-mmss';
 import { computed } from 'vue';
+import { backendApi } from 'src/boot/axios';
+import type { AxiosError } from 'axios';
 
 const { track, queue, type, downloadStatus } = defineProps<{
   track: Track;
   queue?: Track[];
   type?: 'local' | 'spotify';
   downloadStatus?: TrackDownloadStatus;
+}>();
+
+const emit = defineEmits<{
+  updateDownloadStatus: [id: string, status: TrackDownloadStatus];
 }>();
 
 const mediaPlayerStore = useMediaPlayerStore();
@@ -76,6 +82,19 @@ const onImageButtonClick = async () => {
     } else {
       // queue track for download
       console.log('queuing for download');
+      try {
+        await backendApi.post<Record<string, TrackDownloadStatus>>('/queue-track', {
+          spotify_track_id: track.id,
+        });
+
+        emit('updateDownloadStatus', track.id, 'queued');
+      } catch (error) {
+        $q.notify({
+          type: 'negative',
+          message: 'Oops - Cloud download error',
+          caption: (error as AxiosError).message,
+        });
+      }
     }
   }
 };
@@ -119,7 +138,7 @@ const playPauseTrack = async () => {
         ratio="1"
       />
       <div
-        v-if="downloadStatus == 'downloading'"
+        v-if="downloadStatus == 'queued' || downloadStatus == 'downloading'"
         class="text-xl absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center"
       >
         <QSpinner color="white" size="md" />

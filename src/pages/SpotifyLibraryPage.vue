@@ -40,6 +40,7 @@
             :queue="queue"
             :type="type"
             :download-status="tracksDownloadStatuses[track.id] ?? 'downloading'"
+            @update-download-status="(id, status) => (tracksDownloadStatuses[id] = status)"
           ></TrackItem>
         </template>
       </LibrarySearchAndFilter>
