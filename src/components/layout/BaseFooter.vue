@@ -68,7 +68,7 @@ const playPauseTrack = async () => {
   <QFooter class="flex flex-col gap-1.5 justify-end bg-transparent h-footer !z-[6000]">
     <!-- Media Player -->
     <div
-      class="flex flex-col mx-2 p-2 bg-black/60 backdrop-blur-md rounded-md border border-gray-600"
+      class="flex flex-col mx-2 p-2 bg-black/60 backdrop-blur-md rounded-md border border-zinc-800"
       @click="toggleFullscreenPlayerVisibility"
     >
       <div class="flex flex-nowrap items-center p-2">
@@ -84,10 +84,10 @@ const playPauseTrack = async () => {
           class="h-full w-auto aspect-square rounded-md mr-3 shrink-0"
         />
         <div class="flex flex-col">
-          <h5 class="text-base font-bold line-clamp-1">
+          <h5 class="text-base font-bold line-clamp-1 break-all">
             {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
           </h5>
-          <span class="text-xs line-clamp-1 text-white/80">
+          <span class="text-xs text-white/80 line-clamp-1 break-all">
             {{ mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist' }}
           </span>
         </div>

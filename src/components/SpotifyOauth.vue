@@ -74,7 +74,7 @@ const authenticate = async () => {
       </p>
 
       <QSpinnerBars v-if="isAuthenticating" size="lg" color="green" class="mx-auto" />
-      <QBtn v-else label="Close" color="green" rounded @click="emit('close')"></QBtn>
+      <QBtn v-else label="Return" color="green" rounded @click="emit('close')"></QBtn>
     </template>
   </QCard>
 </template>

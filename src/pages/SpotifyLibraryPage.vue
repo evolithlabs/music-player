@@ -40,6 +40,7 @@
             :queue="queue"
             :type="type"
             :download-status="tracksDownloadStatuses[track.id] ?? 'downloading'"
+            class="p-1.5"
             @update-download-status="(id, status) => (tracksDownloadStatuses[id] = status)"
           ></TrackItem>
         </template>
@@ -81,7 +82,9 @@ onMounted(async () => {
   }
 
   validatingAccessToken.value = false;
-  await fetchTracks();
+
+  // Fetch tracks
+  if (accessTokenIsValid.value) await fetchTracks();
 });
 
 const searchQuery = ref<string>('');

@@ -56,16 +56,16 @@ const tabModel = defineModel<LibraryTab>('tab', {
     </QTabs>
 
     <QTabPanels v-model="tabModel" animated swipeable class="grow bg-transparent">
-      <QTabPanel name="tracks" class="p-0 m-0 grow">
+      <QTabPanel name="tracks" class="p-2 m-0 grow">
         <QVirtualScroll
           v-if="tracks.length"
           :items="tracks"
           :virtual-scroll-item-size="56"
           v-slot="{ item, index }"
         >
-          <QItem :key="index" dense class="pt-2 px-2">
+          <QItem :key="index" dense class="p-0 m-0">
             <slot name="track" :track="item as Track" :queue="tracks" :type="type">
-              <TrackItem :track="item" :queue="tracks" :type="type"></TrackItem>
+              <TrackItem :track="item" :queue="tracks" :type="type" class="p-1.5"></TrackItem>
             </slot>
           </QItem>
         </QVirtualScroll>

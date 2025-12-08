@@ -1,6 +1,6 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { ref } from 'vue';
-import { MediaScanner } from '../../../capacitor-plugins/capacitor-mediastore/dist/esm';
+import { MediaScanner } from 'capacitor-mediastore';
 import type { Track } from 'src/types/tracks';
 
 export const useMediaLibraryStore = defineStore('media-library', () => {
