@@ -47,6 +47,10 @@ const spotifyTrackHasLocalVersion = computed(() => {
   );
 });
 
+const spotifyTrackLocalVersion = computed(() => {
+  return mediaLibraryStore.tracks.find((t) => t.spotify_id && t.spotify_id == track.spotify_id);
+});
+
 const showTrackOptions = () => {
   const options: {
     classes?: VueClassProp;
@@ -106,7 +110,11 @@ const showTrackOptions = () => {
 
 const imageButtonIcon = computed(() => {
   if (type == 'local' || downloadStatus == 'completed') {
-    if (!mediaPlayerStore.isPlaying || mediaPlayerStore.currentTrack?.id != track.id) {
+    if (
+      !mediaPlayerStore.isPlaying ||
+      (mediaPlayerStore.currentTrack?.id != track.id &&
+        mediaPlayerStore.currentTrack?.spotify_id != track.spotify_id)
+    ) {
       return biPlayFill;
     } else {
       return biPauseFill;
@@ -149,16 +157,29 @@ const onImageButtonClick = async () => {
 };
 
 const playPauseTrack = async () => {
-  if (mediaPlayerStore.currentTrack?.id == track.id) {
+  if (
+    mediaPlayerStore.currentTrack?.id == track.id ||
+    mediaPlayerStore.currentTrack?.spotify_id == track.spotify_id
+  ) {
     // toggle play/pause
     await mediaControlsStore.executeAction({
       message: 'music-controls-toggle-play-pause',
       position: 0,
     });
   } else {
-    await mediaPlayerStore.loadAndPlayTracks(track, queue ?? [track], {
-      type: 'misc',
-    });
+    if (type == 'local') {
+      await mediaPlayerStore.loadAndPlayTracks(track, queue ?? [track], {
+        type: 'misc',
+      });
+    } else {
+      await mediaPlayerStore.loadAndPlayTracks(
+        spotifyTrackLocalVersion.value ?? track,
+        [spotifyTrackLocalVersion.value ?? track],
+        {
+          type: 'misc',
+        },
+      );
+    }
 
     await mediaControlsStore.updateMetadata({
       track: track.title,
@@ -229,7 +250,9 @@ const downloadTrack = async () => {
   <div
     class="flex flex-nowrap items-center grow text-white rounded-md"
     :class="{
-      'bg-glass !rounded-md': mediaPlayerStore.currentTrack?.id == track.id,
+      'bg-glass !rounded-md':
+        mediaPlayerStore.currentTrack?.id == track.id ||
+        mediaPlayerStore.currentTrack?.spotify_id == track.spotify_id,
     }"
   >
     <div class="mr-3 relative rounded-md">
