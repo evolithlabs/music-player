@@ -7,10 +7,33 @@
       </h1>
     </div>
 
+    {{ tracks }}
+
     <div class="grow overflow-scroll"></div>
   </QPage>
 </template>
 
 <script setup lang="ts">
-import { QIcon, QPage } from 'quasar';
+import { QIcon, QPage, useQuasar } from 'quasar';
+import { db } from 'src/boot/db';
+import type { DatabaseTrack } from 'src/types/db';
+import { onMounted, ref } from 'vue';
+
+const $q = useQuasar();
+onMounted(async () => {
+  await fetchTracks();
+});
+
+const tracks = ref<DatabaseTrack[]>([]);
+const fetchTracks = async () => {
+  try {
+    const res = await db.selectFrom('tracks').selectAll().execute();
+    tracks.value = res;
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: `error: ${(error as Error).message}`,
+    });
+  }
+};
 </script>

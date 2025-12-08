@@ -7,15 +7,30 @@ import { onMounted } from 'vue';
 import { useMediaControlsStore } from './stores/media-controls';
 import { useMediaLibraryStore } from './stores/media-library';
 import { useMediaPlayerStore } from './stores/media-player';
+import { migrate } from './db/migrations/migrator';
+import { db } from 'src/boot/db';
+import { useQuasar } from 'quasar';
 
+const $q = useQuasar();
 const mediaLibraryStore = useMediaLibraryStore();
 const mediaControlsStore = useMediaControlsStore();
 const mediaPlayerStore = useMediaPlayerStore();
 
 onMounted(async () => {
-  // Scan for tracks in the media library
-  await mediaLibraryStore.scanTracks();
+  try {
+    await initMediaPlayer();
+    await runDbMigrations();
+    await syncLocalTracks();
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Oops - App Init error',
+      caption: (error as Error).message,
+    });
+  }
+});
 
+const initMediaPlayer = async () => {
   // Initialize media controls with the current track info
   await mediaControlsStore.init({
     track: mediaPlayerStore.currentTrack?.title ?? 'Unknown Track',
@@ -34,5 +49,13 @@ onMounted(async () => {
   if (mediaPlayerStore.currentTrack) {
     mediaPlayerStore.loadAudio();
   }
-});
+};
+const runDbMigrations = async () => {
+  await migrate(db);
+};
+
+const syncLocalTracks = async () => {
+  // Scan for tracks in the media library
+  await mediaLibraryStore.scanTracks();
+};
 </script>
