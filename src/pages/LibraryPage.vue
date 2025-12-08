@@ -5,7 +5,16 @@
         <QIcon name="bi-music-note-beamed" class="text-4xl" />
         Your Library
 
-        <QBtn dense round flat icon="bi-arrow-clockwise" class="ml-auto"> </QBtn>
+        <QBtn
+          dense
+          round
+          flat
+          icon="bi-arrow-clockwise"
+          class="ml-auto"
+          :class="{ 'animate-spin': mediaLibraryStore.scanningTracks }"
+          @click="mediaLibraryStore.scanTracks()"
+        >
+        </QBtn>
       </h1>
     </div>
 

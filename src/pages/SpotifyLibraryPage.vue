@@ -120,6 +120,7 @@ const fetchTracks = async () => {
       // Map SpotifyTrack to your Track type and add to tracks array
       const track: Track = {
         id: spotifyTrack.id ?? '-1',
+        spotify_id: spotifyTrack.id ?? '-1',
         title: spotifyTrack.name ?? 'Unknown Title',
         artist: spotifyTrack.artists?.map((artist) => artist.name).join(', ') ?? 'Unknown Artist',
         album: spotifyTrack.album?.name ?? 'Unknown Album',

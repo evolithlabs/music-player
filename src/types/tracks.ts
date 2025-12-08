@@ -1,5 +1,6 @@
 export interface Track {
   id: string;
+  spotify_id?: string;
   title: string;
   artist: string;
   album: string;

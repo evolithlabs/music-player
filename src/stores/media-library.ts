@@ -6,7 +6,9 @@ import type { Track } from 'src/types/tracks';
 export const useMediaLibraryStore = defineStore('media-library', () => {
   const tracks = ref<Track[]>([]);
 
+  const scanningTracks = ref(false);
   const scanTracks = async () => {
+    scanningTracks.value = true;
     const permissions = await MediaScanner.requestPermissions();
     if (!permissions.granted) {
       alert('Permissions not granted. Please enable them in system settings.');
@@ -15,9 +17,10 @@ export const useMediaLibraryStore = defineStore('media-library', () => {
 
     const result = await MediaScanner.getAudioFiles();
     tracks.value = result.files;
+    scanningTracks.value = false;
   };
 
-  return { tracks, scanTracks };
+  return { tracks, scanTracks, scanningTracks };
 });
 
 if (import.meta.hot) {

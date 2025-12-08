@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { QBtn, QImg, QSpinner, useQuasar } from 'quasar';
+import type { VueClassProp, VueStyleProp } from 'quasar';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
 import type { Track, TrackDownloadStatus } from 'src/types/tracks';
@@ -10,7 +11,14 @@ import { formatMsToMMSS } from 'src/utils/format-ms-to-mmss';
 import { computed } from 'vue';
 import { backendApi } from 'src/boot/axios';
 import type { AxiosError } from 'axios';
-import { biCloudArrowDownFill, biPauseFill, biPlayFill } from '@quasar/extras/bootstrap-icons';
+import {
+  biCloudArrowDownFill,
+  biFloppy2,
+  biPauseFill,
+  biPlayFill,
+  biSpotify,
+} from '@quasar/extras/bootstrap-icons';
+import { useMediaLibraryStore } from 'src/stores/media-library';
 
 const { track, queue, type, downloadStatus } = defineProps<{
   track: Track;
@@ -23,49 +31,70 @@ const emit = defineEmits<{
   updateDownloadStatus: [id: string, status: TrackDownloadStatus];
 }>();
 
+const $q = useQuasar();
 const mediaPlayerStore = useMediaPlayerStore();
 const mediaControlsStore = useMediaControlsStore();
+const mediaLibraryStore = useMediaLibraryStore();
 
-const $q = useQuasar();
+const localTrackIsSpotifyVersion = computed(() => {
+  return type == 'local' && track.spotify_id;
+});
+
+const spotifyTrackHasLocalVersion = computed(() => {
+  return (
+    type == 'spotify' &&
+    mediaLibraryStore.tracks.some((t) => t.spotify_id && t.spotify_id == track.spotify_id)
+  );
+});
+
 const showTrackOptions = () => {
+  const options: {
+    classes?: VueClassProp;
+    style?: VueStyleProp;
+    icon?: string;
+    img?: string;
+    avatar?: string;
+    label?: string | number;
+    value: string;
+  }[] = [
+    {
+      icon: 'bi-eye-fill',
+      label: 'More details',
+      value: 'details',
+    },
+  ];
+
+  if (type == 'spotify' && !spotifyTrackHasLocalVersion.value) {
+    if (downloadStatus == 'completed') {
+      options.push({
+        icon: 'bi-download',
+        label: 'Download now',
+        value: 'download',
+      });
+    } else {
+      options.push({
+        icon: 'bi-cloud-arrow-down',
+        label: 'Download to the cloud',
+        value: 'cloud_download',
+      });
+    }
+  }
+
+  if (type == 'local' || spotifyTrackHasLocalVersion.value) {
+    options.push({
+      icon: 'bi-trash-fill',
+      label: 'Delete track',
+      value: 'play',
+      classes: 'text-red-400',
+    });
+  }
+
   $q.bottomSheet({
     title: `${track.artist} - ${track.title}`,
     grid: false,
     dark: true,
     class: 'bg-black text-white border-t',
-    actions: [
-      {
-        icon: 'bi-eye-fill',
-        label: 'More details',
-        value: 'details',
-      },
-      {
-        icon: 'bi-person-fill',
-        label: 'Go to artist',
-        value: 'artist',
-      },
-      {
-        icon: 'bi-vinyl-fill',
-        label: 'Go to album',
-        value: 'album',
-      },
-      {
-        icon: 'bi-plus-square-fill',
-        label: 'Add to library',
-        value: 'library',
-      },
-      {
-        icon: downloadStatus == 'completed' ? 'bi-download' : 'bi-cloud-arrow-down',
-        label: downloadStatus == 'completed' ? 'Download now' : 'Download to cloud',
-        value: downloadStatus == 'completed' ? 'download' : 'cloud_download',
-      },
-      {
-        icon: 'bi-trash-fill',
-        label: 'Delete track',
-        value: 'play',
-        classes: 'text-red-400',
-      },
-    ],
+    actions: options,
   }).onOk((option) => {
     switch (option.value) {
       case 'download':
@@ -100,6 +129,13 @@ const onImageButtonClick = async () => {
           spotify_track_id: track.id,
         });
 
+        $q.notify({
+          type: 'info',
+          message: 'Initiated Track download on cloud',
+          caption: 'You will be able to play/download the track soon!',
+          timeout: 3500,
+          actions: [{ icon: 'bi-x', color: 'white' }],
+        });
         emit('updateDownloadStatus', track.id, 'queued');
       } catch (error) {
         $q.notify({
@@ -147,33 +183,38 @@ const downloadTrack = async () => {
     const fileName = `${track.artist} - ${track.title}.mp3`;
     const fullPath = `${basePath}/${fileName}`;
 
-    // const progressListener = await FileTransfer.addListener('progress', (progress) => {
-    //   $q.notify({
-    //     type: 'info',
-    //     message: 'Download progress',
-    //     caption: `Downloaded ${progress.bytes} of ${progress.contentLength}`,
-    //   });
-    // });
-
-    $q.notify({
+    const notif = $q.notify({
+      group: false, // required to be updatable
+      timeout: 0, // we want to be in control when it gets dismissed
+      spinner: true,
+      message: 'Downloading track...',
+      caption: '0%',
       type: 'info',
-      message: `Track ${track.title} is being downloaded`,
-      closeBtn: true,
+    });
+    const progressListener = await FileTransfer.addListener('progress', (progress) => {
+      const percentageCompleted = Math.floor((progress.bytes / progress.contentLength) * 100);
+      notif({
+        caption: `${percentageCompleted}%`,
+      });
     });
 
-    const response = await FileTransfer.downloadFile({
+    await FileTransfer.downloadFile({
       url: `${backendApi.defaults.baseURL}play-track/${track.id}?download=1`,
       path: fullPath,
       progress: true,
     });
 
-    $q.notify({
+    notif({
+      icon: 'bi-check',
       type: 'positive',
-      message: `Track ${track.title} downloaded`,
-      caption: `Saved at ${response.path}`,
+      message: `Track downloaded`,
+      caption: `${track.artist} - ${track.title}`,
+      spinner: false,
+      timeout: 3500,
+      actions: [{ icon: 'bi-x', color: 'white' }],
     });
 
-    // await progressListener.remove();
+    await progressListener.remove();
   } catch (error) {
     $q.notify({
       type: 'negative',
@@ -191,7 +232,7 @@ const downloadTrack = async () => {
       'bg-glass !rounded-md': mediaPlayerStore.currentTrack?.id == track.id,
     }"
   >
-    <div class="mr-3 relative rounded-md overflow-hidden">
+    <div class="mr-3 relative rounded-md">
       <QImg
         :src="
           track.coverPath
@@ -201,6 +242,7 @@ const downloadTrack = async () => {
         width="48px"
         position="cover"
         ratio="1"
+        class="rounded-md"
       />
       <div
         v-if="downloadStatus == 'queued' || downloadStatus == 'downloading'"
@@ -215,9 +257,19 @@ const downloadTrack = async () => {
         class="text-xs absolute top-0 left-0 right-0 bottom-0 [&_.q-icon]:stroke-[0.5] [&_.q-icon]:stroke-zinc-700 bg-black/20 opacity-80"
         @click="onImageButtonClick"
       />
+      <QBtn
+        v-if="localTrackIsSpotifyVersion"
+        :icon="biSpotify"
+        class="!text-[0.4rem] text-green-500 absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 p-0 m-0"
+      ></QBtn>
+      <QBtn
+        v-if="spotifyTrackHasLocalVersion"
+        :icon="biFloppy2"
+        class="!text-[0.4rem] text-white absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 p-0 m-0"
+      ></QBtn>
     </div>
     <div class="flex flex-col mr-4">
-      <h6 class="font-bold line-clamp-1 text-sm">
+      <h6 class="font-bold line-clamp-1 text-sm relative">
         {{ track.title }}
       </h6>
       <div class="flex items-center gap-1">
@@ -226,7 +278,7 @@ const downloadTrack = async () => {
         <span class="text-xs">{{ formatMsToMMSS(track.duration) }}</span>
       </div>
     </div>
-    <div class="flex items-baseline ml-auto shrink-0">
+    <div class="flex items-baseline ml-auto shrink-0 relative">
       <QBtn
         icon="bi-three-dots-vertical"
         round
