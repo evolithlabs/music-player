@@ -6,6 +6,11 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .createTable('tracks')
     .addColumn('id', 'integer', (col) => col.primaryKey())
     .addColumn('name', 'varchar')
+    .addColumn('spotify_id', 'varchar')
+    .addColumn('duration', 'numeric')
+    .addColumn('path', 'varchar')
+    .addColumn('cover_path', 'varchar')
+    .addColumn('year', 'varchar')
     .execute();
 }
 

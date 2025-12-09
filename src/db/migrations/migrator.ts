@@ -19,7 +19,7 @@ class BrowserMigrationProvider implements MigrationProvider {
   }
 }
 
-export async function migrate(db: Kysely<Database>, $q: QVueGlobals) {
+export const migrateUp = async (db: Kysely<Database>, $q: QVueGlobals) => {
   const migrator = new Migrator({
     db,
     provider: new BrowserMigrationProvider(),
@@ -46,4 +46,38 @@ export async function migrate(db: Kysely<Database>, $q: QVueGlobals) {
       }
     }
   }
-}
+};
+
+export const migrateDown = async (db: Kysely<Database>, $q: QVueGlobals) => {
+  if (!import.meta.env.DEV) return;
+
+  const migrator = new Migrator({
+    db,
+    provider: new BrowserMigrationProvider(),
+  });
+
+  const migrations = await migrator.getMigrations();
+  for (let i = 0; i < migrations.length; i++) {
+    const { error, results } = await migrator.migrateDown();
+
+    if (error) {
+      $q.notify({
+        type: 'negative',
+        message: 'Oops - DB Migration error',
+        caption: (error as Error).message,
+      });
+    }
+
+    if (results) {
+      for (const r of results) {
+        if (r.status === 'Error') {
+          $q.notify({
+            type: 'negative',
+            message: 'Oops - DB Migration error',
+            caption: `Migration ${r.migrationName} Failed`,
+          });
+        }
+      }
+    }
+  }
+};

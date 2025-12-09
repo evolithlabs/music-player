@@ -26,6 +26,11 @@
             {{ text }}
           </span>
         </div>
+
+        <p class="text-xs text-center px-6">
+          Don’t worry, this setup only runs the first time you launch the app. Future launches will
+          skip this step.
+        </p>
       </div>
 
       <QLinearProgress
@@ -38,13 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useMediaControlsStore } from './stores/media-controls';
 import { useMediaLibraryStore } from './stores/media-library';
 import { useMediaPlayerStore } from './stores/media-player';
-import { migrate } from './db/migrations/migrator';
+import { migrateDown, migrateUp } from './db/migrations/migrator';
 import { QBtn, QIcon, QLinearProgress, useQuasar } from 'quasar';
-import { destroyDbInstance, getDbInstance } from './db';
+import { getDbInstance } from './db';
 import { biHeadphones } from '@quasar/extras/bootstrap-icons';
 
 const $q = useQuasar();
@@ -60,11 +65,17 @@ onMounted(async () => {
 
   initizalizing.value = true;
   try {
-    await migrate(db, $q);
+    await migrateDown(db, $q);
+
+    initializeProgress.value = 0.16;
+    await migrateUp(db, $q);
+
     initializeProgress.value = 0.33;
     await syncLocalTracks();
+
     initializeProgress.value = 0.66;
     await initMediaPlayer();
+
     initializeProgress.value = 1;
   } catch (error) {
     $q.notify({
@@ -104,8 +115,4 @@ const syncLocalTracks = async () => {
   // Scan for tracks in the media library
   await mediaLibraryStore.scanTracks();
 };
-
-onUnmounted(async () => {
-  await destroyDbInstance();
-});
 </script>

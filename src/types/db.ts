@@ -1,7 +1,7 @@
 export interface DatabaseTrack {
-  id: string;
+  id?: number | undefined;
   spotify_id: string | undefined;
-  title: string;
+  name: string;
   artist: string | undefined;
   album: string | undefined;
   coverPath: string | undefined;
