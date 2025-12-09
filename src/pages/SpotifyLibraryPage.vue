@@ -39,7 +39,7 @@
             :track="track"
             :queue="queue"
             :type="type"
-            :download-status="tracksDownloadStatuses[track.id] ?? 'downloading'"
+            :download-status="tracksDownloadStatuses[track.id]"
             class="p-1.5"
             @update-download-status="(id, status) => (tracksDownloadStatuses[id] = status)"
           ></TrackItem>

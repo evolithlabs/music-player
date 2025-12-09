@@ -13,6 +13,7 @@ import { backendApi } from 'src/boot/axios';
 import type { AxiosError } from 'axios';
 import {
   biCloudArrowDownFill,
+  biExclamationCircleFill,
   biFloppy2,
   biPauseFill,
   biPlayFill,
@@ -24,7 +25,7 @@ const { track, queue, type, downloadStatus } = defineProps<{
   track: Track;
   queue?: Track[];
   type?: 'local' | 'spotify';
-  downloadStatus?: TrackDownloadStatus;
+  downloadStatus?: TrackDownloadStatus | undefined;
 }>();
 
 const emit = defineEmits<{
@@ -72,7 +73,7 @@ const showTrackOptions = () => {
     if (downloadStatus == 'completed') {
       options.push({
         icon: 'bi-download',
-        label: 'Download now',
+        label: 'Download',
         value: 'download',
       });
     } else {
@@ -120,6 +121,11 @@ const imageButtonIcon = computed(() => {
       return biPauseFill;
     }
   }
+
+  if (downloadStatus == 'failed') {
+    return biExclamationCircleFill;
+  }
+
   return biCloudArrowDownFill;
 });
 
@@ -278,6 +284,7 @@ const downloadTrack = async () => {
         :icon="imageButtonIcon"
         flat
         class="text-xs absolute top-0 left-0 right-0 bottom-0 [&_.q-icon]:stroke-[0.5] [&_.q-icon]:stroke-zinc-700 bg-black/20 opacity-80"
+        :class="{ 'text-red-400': downloadStatus == 'failed' }"
         @click="onImageButtonClick"
       />
       <QBtn
