@@ -1,5 +1,5 @@
 import { type Kysely, Migrator, type Migration, type MigrationProvider } from 'kysely';
-import { useQuasar } from 'quasar';
+import type { QVueGlobals } from 'quasar';
 import type { Database } from 'src/types/db';
 
 class BrowserMigrationProvider implements MigrationProvider {
@@ -19,9 +19,7 @@ class BrowserMigrationProvider implements MigrationProvider {
   }
 }
 
-export async function migrate(db: Kysely<Database>) {
-  const $q = useQuasar();
-
+export async function migrate(db: Kysely<Database>, $q: QVueGlobals) {
   const migrator = new Migrator({
     db,
     provider: new BrowserMigrationProvider(),

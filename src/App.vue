@@ -1,26 +1,71 @@
 <template>
-  <router-view />
+  <div>
+    <router-view v-show="initializeProgress == 1" />
+    <div
+      v-if="initizalizing"
+      class="h-dvh w-dvw absolute top-0 left-0 right-0 bottom-0 z-[9999] flex gap-4 bg-black !rounded-none text-white p-4 pt-32 opacity-100 transition-all duration-1000"
+      :class="{ '!opacity-0': initializeProgress == 1 }"
+    >
+      <div
+        class="absolute top-0 bottom-16 left-0 right-0 flex flex-col justify-center items-center gap-4"
+      >
+        <QBtn :icon="biHeadphones" dense class="text-5xl animate-wiggle pointer-events-none" />
+        <h2 class="text-3xl">Tuning your library</h2>
+
+        <div class="flex flex-col gap-2 items-start border border-white rounded-md p-4 text-xl">
+          <span
+            v-for="(text, i) in [
+              'Updating database',
+              'Scanning music folders',
+              'Preparing media player',
+            ]"
+            :key="text"
+            class="flex items-center gap-2"
+          >
+            <QIcon :name="initializeProgress < (i + 1) * 0.33 ? 'bi-circle' : 'bi-check-circle'" />
+            {{ text }}
+          </span>
+        </div>
+      </div>
+
+      <QLinearProgress
+        :value="initializeProgress"
+        :animation-speed="1000"
+        class="bg-zinc-700 text-white rounded-full h-4 self-end"
+      />
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useMediaControlsStore } from './stores/media-controls';
 import { useMediaLibraryStore } from './stores/media-library';
 import { useMediaPlayerStore } from './stores/media-player';
 import { migrate } from './db/migrations/migrator';
-import { db } from 'src/boot/db';
-import { useQuasar } from 'quasar';
+import { QBtn, QIcon, QLinearProgress, useQuasar } from 'quasar';
+import { destroyDbInstance, getDbInstance } from './db';
+import { biHeadphones } from '@quasar/extras/bootstrap-icons';
 
 const $q = useQuasar();
+
 const mediaLibraryStore = useMediaLibraryStore();
 const mediaControlsStore = useMediaControlsStore();
 const mediaPlayerStore = useMediaPlayerStore();
 
+const initizalizing = ref(true);
+const initializeProgress = ref(0);
 onMounted(async () => {
+  const db = await getDbInstance();
+
+  initizalizing.value = true;
   try {
-    await initMediaPlayer();
-    await runDbMigrations();
+    await migrate(db, $q);
+    initializeProgress.value = 0.33;
     await syncLocalTracks();
+    initializeProgress.value = 0.66;
+    await initMediaPlayer();
+    initializeProgress.value = 1;
   } catch (error) {
     $q.notify({
       type: 'negative',
@@ -28,6 +73,10 @@ onMounted(async () => {
       caption: (error as Error).message,
     });
   }
+
+  setTimeout(() => {
+    initizalizing.value = false;
+  }, 1000);
 });
 
 const initMediaPlayer = async () => {
@@ -50,12 +99,13 @@ const initMediaPlayer = async () => {
     mediaPlayerStore.loadAudio();
   }
 };
-const runDbMigrations = async () => {
-  await migrate(db);
-};
 
 const syncLocalTracks = async () => {
   // Scan for tracks in the media library
   await mediaLibraryStore.scanTracks();
 };
+
+onUnmounted(async () => {
+  await destroyDbInstance();
+});
 </script>

@@ -12,7 +12,8 @@
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev",
     "build": "quasar build",
-    "postinstall": "quasar prepare"
+    "postinstall": "quasar prepare",
+    "icons": "icongenie generate -i src/assets/logo.png --skip-trim --theme-color 000000"
   },
   "dependencies": {
     "@mediagrid/capacitor-native-audio": "^2.3.1",

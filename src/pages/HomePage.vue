@@ -15,17 +15,20 @@
 
 <script setup lang="ts">
 import { QIcon, QPage, useQuasar } from 'quasar';
-import { db } from 'src/boot/db';
+import { getDbInstance } from 'src/db';
 import type { DatabaseTrack } from 'src/types/db';
 import { onMounted, ref } from 'vue';
 
 const $q = useQuasar();
+
 onMounted(async () => {
   await fetchTracks();
 });
 
 const tracks = ref<DatabaseTrack[]>([]);
 const fetchTracks = async () => {
+  const db = await getDbInstance();
+
   try {
     const res = await db.selectFrom('tracks').selectAll().execute();
     tracks.value = res;
