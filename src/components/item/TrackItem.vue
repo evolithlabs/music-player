@@ -95,7 +95,7 @@ const showTrackOptions = () => {
   }
 
   $q.bottomSheet({
-    title: `${track.artist} - ${track.title}`,
+    title: `${track.artist} - ${track.name}`,
     grid: false,
     dark: true,
     class: 'bg-black text-white border-t',
@@ -165,7 +165,8 @@ const onImageButtonClick = async () => {
 const playPauseTrack = async () => {
   if (
     mediaPlayerStore.currentTrack?.id == track.id ||
-    mediaPlayerStore.currentTrack?.spotify_id == track.spotify_id
+    (mediaPlayerStore.currentTrack?.spotify_id &&
+      mediaPlayerStore.currentTrack.spotify_id == track.spotify_id)
   ) {
     // toggle play/pause
     await mediaControlsStore.executeAction({
@@ -188,7 +189,7 @@ const playPauseTrack = async () => {
     }
 
     await mediaControlsStore.updateMetadata({
-      track: track.title,
+      track: track.name,
       artist: track.artist,
       album: track.album,
       cover: track.coverPath ?? '/images/background-cover.jpg',
@@ -207,7 +208,7 @@ const downloadTrack = async () => {
     });
 
     const basePath = documentsDir.uri.replace('file://', '');
-    const fileName = `${track.artist} - ${track.title}.mp3`;
+    const fileName = `${track.artist} - ${track.name}.mp3`;
     const fullPath = `${basePath}/${fileName}`;
 
     const notif = $q.notify({
@@ -235,7 +236,7 @@ const downloadTrack = async () => {
       icon: 'bi-check',
       type: 'positive',
       message: `Track downloaded`,
-      caption: `${track.artist} - ${track.title}`,
+      caption: `${track.artist} - ${track.name}`,
       spinner: false,
       timeout: 3500,
       actions: [{ icon: 'bi-x', color: 'white' }],
@@ -258,7 +259,8 @@ const downloadTrack = async () => {
     :class="{
       'bg-glass !rounded-md':
         mediaPlayerStore.currentTrack?.id == track.id ||
-        mediaPlayerStore.currentTrack?.spotify_id == track.spotify_id,
+        (mediaPlayerStore.currentTrack?.spotify_id &&
+          mediaPlayerStore.currentTrack.spotify_id == track.spotify_id),
     }"
   >
     <div class="mr-3 relative rounded-md">
@@ -300,7 +302,7 @@ const downloadTrack = async () => {
     </div>
     <div class="flex flex-col mr-4">
       <h6 class="font-bold line-clamp-1 text-sm relative">
-        {{ track.title }}
+        {{ track.name }}
       </h6>
       <div class="flex items-center gap-1">
         <span class="text-xs line-clamp-1">{{ track.artist }}</span>

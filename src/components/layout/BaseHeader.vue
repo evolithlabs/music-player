@@ -91,7 +91,7 @@ const tracks = ref([
                     <TrackItem
                       :track="{
                         id: '22',
-                        title: 'Washed Up',
+                        name: 'Washed Up',
                         album: 'Fear',
                         artist: 'NF',
                         coverPath: '',

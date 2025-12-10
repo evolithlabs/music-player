@@ -85,7 +85,7 @@ const playPauseTrack = async () => {
         />
         <div class="flex flex-col">
           <h5 class="text-base font-bold line-clamp-1 break-all">
-            {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
+            {{ mediaPlayerStore.currentTrack?.name ?? 'Unknown Track' }}
           </h5>
           <span class="text-xs text-white/80 line-clamp-1 break-all">
             {{ mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist' }}
@@ -182,7 +182,7 @@ const playPauseTrack = async () => {
               />
               <div class="flex flex-col text-center mt-4">
                 <h5 class="text-2xl font-bold line-clamp-1">
-                  {{ mediaPlayerStore.currentTrack?.title ?? 'Unknown Track' }}
+                  {{ mediaPlayerStore.currentTrack?.name ?? 'Unknown Track' }}
                 </h5>
                 <span class="text-base line-clamp-1 text-white/80">
                   {{ mediaPlayerStore.currentTrack?.artist ?? 'Unknown Artist' }}

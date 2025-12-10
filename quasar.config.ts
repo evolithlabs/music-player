@@ -89,6 +89,7 @@ export default defineConfig((/* ctx */) => {
       config: {
         notify: {
           position: 'bottom',
+          classes: '!z-[9999]',
         },
       },
 

@@ -1,17 +1,38 @@
 export interface DatabaseTrack {
-  id?: number | undefined;
-  spotify_id: string | undefined;
-  name: string;
-  artist: string | undefined;
-  album: string | undefined;
-  coverPath: string | undefined;
-  year: number | undefined;
-  duration: number; // duration in seconds
-  path: string;
+  id: number | undefined;
+  name: string | null;
+  cover_path: string | null;
+  year: number | null;
+  duration: number | null; // duration in seconds
+  path: string | null;
+  spotify_id: string | null;
+  local_id: string | null;
+  album_id: number | null;
+}
+
+export interface DatabaseAlbum {
+  id: number | undefined;
+  name: string | null;
+  spotify_id: string | null;
+}
+
+export interface DatabaseArtist {
+  id: number | null;
+  name: string | null;
+  spotify_id: string | null;
+}
+
+export interface DatabaseTracksArtist {
+  id: number | null;
+  track_id: number | null;
+  artist_id: number | null;
 }
 
 interface Database {
   tracks: DatabaseTrack;
+  albums: DatabaseAlbum;
+  artists: DatabaseArtist;
+  tracks_artists: DatabaseTracksArtist;
 }
 
 export type { Database };

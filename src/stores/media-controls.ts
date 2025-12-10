@@ -81,7 +81,7 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
         // next
         await mediaPlayerStore.next();
         await updateMetadata({
-          track: mediaPlayerStore.currentTrack?.title || 'Unknown',
+          track: mediaPlayerStore.currentTrack?.name || 'Unknown',
           artist: mediaPlayerStore.currentTrack?.artist || 'Unknown',
           album: mediaPlayerStore.currentTrack?.album || 'Unknown',
           cover: mediaPlayerStore.currentTrack?.coverPath || '',
@@ -95,7 +95,7 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
         // previous
         await mediaPlayerStore.prev();
         await updateMetadata({
-          track: mediaPlayerStore.currentTrack?.title || 'Unknown',
+          track: mediaPlayerStore.currentTrack?.name || 'Unknown',
           artist: mediaPlayerStore.currentTrack?.artist || 'Unknown',
           album: mediaPlayerStore.currentTrack?.album || 'Unknown',
           cover: mediaPlayerStore.currentTrack?.coverPath || '',

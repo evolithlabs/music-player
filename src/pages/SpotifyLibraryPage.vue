@@ -121,7 +121,7 @@ const fetchTracks = async () => {
       const track: Track = {
         id: spotifyTrack.id ?? '-1',
         spotify_id: spotifyTrack.id ?? '-1',
-        title: spotifyTrack.name ?? 'Unknown Title',
+        name: spotifyTrack.name ?? 'Unknown Title',
         artist: spotifyTrack.artists?.map((artist) => artist.name).join(', ') ?? 'Unknown Artist',
         album: spotifyTrack.album?.name ?? 'Unknown Album',
         duration: spotifyTrack.duration_ms ?? 0,

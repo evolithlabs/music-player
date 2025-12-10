@@ -14,25 +14,41 @@ const DB_ENCRYPTED = false;
 const DB_MODE = 'no-encryption';
 const DB_READONLY = false;
 
+let initPromise: Promise<Kysely<Database>> | null = null; // Lock variable
+
 export const getDbInstance = async () => {
   if (db) return db;
 
-  const sqlite = new SQLiteConnection(CapacitorSQLite);
-  await ensureConnection(sqlite);
+  // If an initialization is already in progress, wait for it
+  if (initPromise) return initPromise;
 
-  db = new Kysely<Database>({
-    dialect: new CapacitorSQLiteKyselyDialect(sqlite, { name: DB_NAME }),
-  });
+  // Create the promise and store it
+  initPromise = (async () => {
+    const sqlite = new SQLiteConnection(CapacitorSQLite);
+    await ensureConnection(sqlite);
 
-  return db;
+    db = new Kysely<Database>({
+      dialect: new CapacitorSQLiteKyselyDialect(sqlite, { name: DB_NAME }),
+    });
+
+    return db;
+  })();
+
+  try {
+    return await initPromise;
+  } finally {
+    initPromise = null; // Clear lock after finish
+  }
 };
 
 const ensureConnection = async (sqlite: SQLiteConnection) => {
+  // Check consistency first (Crucial for Capacitor)
+  await sqlite.checkConnectionsConsistency();
+
   const { result } = await sqlite.isConnection(DB_NAME, DB_READONLY);
 
   let connection: SQLiteDBConnection;
   if (!result) {
-    // Create NEW connection with all required params
     connection = await sqlite.createConnection(
       DB_NAME,
       DB_ENCRYPTED,
@@ -41,11 +57,14 @@ const ensureConnection = async (sqlite: SQLiteConnection) => {
       DB_READONLY,
     );
   } else {
-    // Retrieve existing one
     connection = await sqlite.retrieveConnection(DB_NAME, DB_READONLY);
   }
 
-  await connection.open();
+  // Check if open before opening
+  const isConnected = await connection.isDBOpen();
+  if (!isConnected.result) {
+    await connection.open();
+  }
 
   return connection;
 };
