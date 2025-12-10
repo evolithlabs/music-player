@@ -129,7 +129,7 @@ const imageButtonIcon = computed(() => {
   return biCloudArrowDownFill;
 });
 
-const onImageButtonClick = async () => {
+const onClick = async () => {
   if (type == 'local') {
     await playPauseTrack();
   } else {
@@ -262,6 +262,7 @@ const downloadTrack = async () => {
         (mediaPlayerStore.currentTrack?.spotify_id &&
           mediaPlayerStore.currentTrack.spotify_id == track.spotify_id),
     }"
+    @click="onClick"
   >
     <div class="mr-3 relative rounded-md">
       <QImg
@@ -287,7 +288,6 @@ const downloadTrack = async () => {
         flat
         class="text-xs absolute top-0 left-0 right-0 bottom-0 [&_.q-icon]:stroke-[0.5] [&_.q-icon]:stroke-zinc-700 bg-black/20 opacity-80"
         :class="{ 'text-red-400': downloadStatus == 'failed' }"
-        @click="onImageButtonClick"
       />
       <QBtn
         v-if="localTrackIsSpotifyVersion"
@@ -317,7 +317,7 @@ const downloadTrack = async () => {
         color="white"
         flat
         class="text-xs"
-        @click="showTrackOptions"
+        @click.stop="showTrackOptions"
       />
     </div>
   </div>

@@ -15,8 +15,8 @@ export const useLocalDB = () => {
       // Set track - album relation
       await db
         .updateTable('tracks')
-        .where('id', '=', dbTrackId)
         .set({ album_id: dbAlbumId })
+        .where('id', '=', dbTrackId)
         .execute();
     }
 
@@ -111,16 +111,14 @@ export const useLocalDB = () => {
     const db = await getDbInstance();
 
     let dbAlbumId: DatabaseAlbum['id'];
-    if (track.album_id) {
-      // Find the album based on spotify_id || name
-      dbAlbumId = (
-        await db
-          .selectFrom('albums')
-          .select('id')
-          .where((eb) => eb('spotify_id', '=', track.album_id!).or('name', '=', track.album))
-          .executeTakeFirst()
-      )?.id;
-    }
+    // Find the album based on spotify_id || name
+    dbAlbumId = (
+      await db
+        .selectFrom('albums')
+        .select('id')
+        .where((eb) => eb('spotify_id', '=', track.album_id ?? null).or('name', '=', track.album))
+        .executeTakeFirst()
+    )?.id;
 
     if (!dbAlbumId && track.album) {
       // Album does not yet exist in db - Create a new album
@@ -130,7 +128,7 @@ export const useLocalDB = () => {
             .insertInto('albums')
             .values({
               name: track.album,
-              spotify_id: track.album_id,
+              spotify_id: track.album_id ?? null,
             })
             .executeTakeFirst()
         ).insertId,
@@ -181,10 +179,10 @@ export const useLocalDB = () => {
       dbArtistId = Number(
         (
           await db
-            .insertInto('albums')
+            .insertInto('artists')
             .values({
               name: name,
-              spotify_id: spotifyId,
+              spotify_id: spotifyId ?? null,
             })
             .executeTakeFirst()
         ).insertId,

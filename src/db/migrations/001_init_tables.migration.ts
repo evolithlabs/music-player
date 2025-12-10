@@ -4,21 +4,21 @@ import type { Database } from 'src/types/db';
 export async function up(db: Kysely<Database>): Promise<void> {
   await db.schema
     .createTable('albums')
-    .addColumn('id', 'integer', (col) => col.primaryKey())
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
     .addColumn('name', 'varchar')
     .addColumn('spotify_id', 'varchar', (col) => col.unique())
     .execute();
 
   await db.schema
     .createTable('artists')
-    .addColumn('id', 'integer', (col) => col.primaryKey())
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
     .addColumn('name', 'varchar')
     .addColumn('spotify_id', 'varchar', (col) => col.unique())
     .execute();
 
   await db.schema
     .createTable('tracks')
-    .addColumn('id', 'integer', (col) => col.primaryKey())
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
     .addColumn('name', 'varchar')
     .addColumn('duration', 'integer')
     .addColumn('path', 'varchar')
@@ -31,7 +31,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
 
   await db.schema
     .createTable('tracks_artists')
-    .addColumn('id', 'integer', (col) => col.primaryKey())
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
     .addColumn('track_id', 'integer', (col) => col.references('tracks.id').onDelete('cascade'))
     .addColumn('artist_id', 'integer', (col) => col.references('artists.id').onDelete('cascade'))
     .execute();
