@@ -9,7 +9,7 @@ const { to, icon } = defineProps<{
 
 <template>
   <RouterLink :to="to" class="link content-center text-center text-white">
-    <QBtn :icon="icon" size="md" round ripple flat />
+    <QBtn :icon="icon" round ripple flat class="text-sm" />
   </RouterLink>
 </template>
 

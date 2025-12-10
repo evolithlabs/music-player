@@ -4,7 +4,6 @@ import {
   QBtnGroup,
   QDialog,
   QFooter,
-  QIcon,
   QImg,
   QSlider,
   QSpinnerBars,
@@ -68,7 +67,7 @@ const playPauseTrack = async () => {
   <QFooter class="flex flex-col gap-1.5 justify-end bg-transparent h-footer !z-[6000]">
     <!-- Media Player -->
     <div
-      class="flex flex-col mx-2 p-2 bg-black/60 backdrop-blur-md rounded-md border border-zinc-800"
+      class="flex flex-col mx-2 p-2 bg-black/60 backdrop-blur-md rounded-md border border-zinc-500"
       @click="toggleFullscreenPlayerVisibility"
     >
       <div class="flex flex-nowrap items-center p-2">
@@ -356,7 +355,9 @@ He started this fire (is this what You wanted, what You wanted?)
     </QDialog>
 
     <!-- Navigation -->
-    <div class="flex justify-evenly bg-glass !rounded-none !rounded-t-md py-2">
+    <div
+      class="flex justify-evenly bg-glass !rounded-none !rounded-t-md py-2 border-t border-zinc-500"
+    >
       <FooterLink v-for="link in leftLinks" :key="link.to" :to="link.to" :icon="link.icon" />
 
       <QBtn round class="z-50" @click="toggleFullscreenPlayerVisibility">
@@ -368,8 +369,10 @@ He started this fire (is this what You wanted, what You wanted?)
           "
           ratio="1"
           style="border-radius: 50%"
+          :class="{
+            'animate-[spin_10s_linear_infinite] ': mediaPlayerStore.isPlaying,
+          }"
         />
-        <QIcon v-show="!mediaPlayerStore.isPlaying" name="bi-claude" class="absolute" />
         <QSpinnerBars size="xs" v-show="mediaPlayerStore.isPlaying" class="absolute" />
       </QBtn>
       <!-- <QBtn
