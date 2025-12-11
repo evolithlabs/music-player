@@ -128,6 +128,7 @@ export const useLocalDB = () => {
             .insertInto('albums')
             .values({
               name: track.album,
+              cover_path: track.coverPath,
               spotify_id: track.album_id ?? null,
             })
             .executeTakeFirst()

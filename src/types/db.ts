@@ -13,6 +13,7 @@ export interface DatabaseTrack {
 export interface DatabaseAlbum {
   id: number | undefined;
   name: string | null;
+  cover_path: string | null;
   spotify_id: string | null;
 }
 
@@ -28,11 +29,17 @@ export interface DatabaseTracksArtist {
   artist_id: number | null;
 }
 
+export interface DatabaseSettings {
+  id: number | undefined;
+  app_is_initialized: boolean | null;
+}
+
 interface Database {
   tracks: DatabaseTrack;
   albums: DatabaseAlbum;
   artists: DatabaseArtist;
   tracks_artists: DatabaseTracksArtist;
+  settings: DatabaseSettings;
 }
 
 export type { Database };

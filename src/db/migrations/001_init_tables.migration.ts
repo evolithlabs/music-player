@@ -6,6 +6,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .createTable('albums')
     .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
     .addColumn('name', 'varchar')
+    .addColumn('cover_path', 'varchar')
     .addColumn('spotify_id', 'varchar', (col) => col.unique())
     .execute();
 
@@ -35,6 +36,12 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .addColumn('track_id', 'integer', (col) => col.references('tracks.id').onDelete('cascade'))
     .addColumn('artist_id', 'integer', (col) => col.references('artists.id').onDelete('cascade'))
     .execute();
+
+  await db.schema
+    .createTable('settings')
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
+    .addColumn('app_is_initialized', 'boolean', (col) => col.defaultTo(false))
+    .execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
@@ -42,4 +49,6 @@ export async function down(db: Kysely<Database>): Promise<void> {
   await db.schema.dropTable('artists').ifExists().execute();
   await db.schema.dropTable('albums').ifExists().execute();
   await db.schema.dropTable('tracks').ifExists().execute();
+
+  await db.schema.dropTable('settings').ifExists().execute();
 }
