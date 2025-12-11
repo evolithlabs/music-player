@@ -148,7 +148,6 @@ const onClick = async () => {
           message: 'Initiated Track download on cloud',
           caption: 'You will be able to play/download the track soon!',
           timeout: 3500,
-          actions: [{ icon: 'bi-x', color: 'white' }],
         });
         emit('updateDownloadStatus', track.id, 'queued');
       } catch (error) {
@@ -239,7 +238,6 @@ const downloadTrack = async () => {
       caption: `${track.artist} - ${track.name}`,
       spinner: false,
       timeout: 3500,
-      actions: [{ icon: 'bi-x', color: 'white' }],
     });
 
     await progressListener.remove();

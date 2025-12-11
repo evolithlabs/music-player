@@ -2,9 +2,11 @@ import { defineStore, acceptHMRUpdate } from 'pinia';
 import { ref } from 'vue';
 import { MediaScanner } from 'capacitor-mediastore';
 import type { Track } from 'src/types/tracks';
+import { useLocalDB } from 'src/composables/local-db';
 
 export const useMediaLibraryStore = defineStore('media-library', () => {
   const tracks = ref<Track[]>([]);
+  const localDb = useLocalDB();
 
   const scanningTracks = ref(false);
   const scanTracks = async () => {
@@ -20,7 +22,19 @@ export const useMediaLibraryStore = defineStore('media-library', () => {
     scanningTracks.value = false;
   };
 
-  return { tracks, scanTracks, scanningTracks };
+  const syncingTracksToDb = ref(false);
+  const syncTracksToDB = async () => {
+    // Scan for tracks in the media library
+    syncingTracksToDb.value = true;
+    for (let i = 0; i < tracks.value.length; i++) {
+      const track = tracks.value[i];
+      if (track) await localDb.syncTrackData(track);
+    }
+
+    syncingTracksToDb.value = false;
+  };
+
+  return { tracks, scanTracks, scanningTracks, syncTracksToDB, syncingTracksToDb };
 });
 
 if (import.meta.hot) {

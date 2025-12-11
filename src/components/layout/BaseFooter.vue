@@ -140,10 +140,7 @@ const playPauseTrack = async () => {
       class="bg-glass text-white z-[7000]"
     >
       <div class="p-4 !h-dvh flex flex-col">
-        <div
-          v-show="showPlayerInFullscreen"
-          class="flex flex-nowrap items-center justify-between gap-4 w-full mb-8"
-        >
+        <div class="flex flex-nowrap items-center justify-between gap-4 w-full mb-8">
           <QBtn
             icon="bi-arrow-left"
             dense
@@ -268,10 +265,7 @@ He started this fire (is this what You wanted, what You wanted?)
             </QTabPanel>
           </QTabPanels>
 
-          <div
-            v-show="showPlayerInFullscreen"
-            class="w-full flex flex-nowrap gap-4 items-center px-2 mt-auto"
-          >
+          <div class="w-full flex flex-nowrap gap-4 items-center px-2 mt-auto">
             <span class="text-xs">{{ formatMsToMMSS(mediaPlayerStore.elapsedTime) }}</span>
             <QSlider
               :model-value="mediaPlayerStore.elapsedTime"
@@ -295,14 +289,7 @@ He started this fire (is this what You wanted, what You wanted?)
           </div>
 
           <div class="flex items-center justify-evenly gap-3 shrink-0">
-            <QBtn
-              v-show="showPlayerInFullscreen"
-              icon="bi-shuffle"
-              flat
-              round
-              dense
-              class="text-md order-1"
-            />
+            <QBtn icon="bi-shuffle" flat round dense class="text-md order-1" />
             <QBtn
               icon="bi-skip-start"
               flat
@@ -336,14 +323,7 @@ He started this fire (is this what You wanted, what You wanted?)
                 })
               "
             />
-            <QBtn
-              v-show="showPlayerInFullscreen"
-              icon="bi-repeat"
-              flat
-              round
-              dense
-              class="text-md order-6"
-            />
+            <QBtn icon="bi-repeat" flat round dense class="text-md order-6" />
           </div>
 
           <QBtnGroup rounded outline class="self-center">

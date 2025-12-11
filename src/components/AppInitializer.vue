@@ -48,7 +48,6 @@
 import { biHeadphones } from '@quasar/extras/bootstrap-icons';
 import type { Kysely } from 'kysely';
 import { QBtn, QIcon, QLinearProgress, useQuasar } from 'quasar';
-import { useLocalDB } from 'src/composables/local-db';
 import { getDbInstance } from 'src/db';
 import { migrateUp } from 'src/db/migrations/migrator';
 import { useMediaControlsStore } from 'src/stores/media-controls';
@@ -69,7 +68,6 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
-const localDb = useLocalDB();
 
 const mediaLibraryStore = useMediaLibraryStore();
 const mediaControlsStore = useMediaControlsStore();
@@ -94,7 +92,7 @@ onMounted(async () => {
       await mediaLibraryStore.scanTracks();
       emit('progress', 0.5);
 
-      await syncTracksToDB();
+      await mediaLibraryStore.syncTracksToDB();
       emit('progress', 0.75);
 
       await initMediaPlayer();
@@ -119,25 +117,6 @@ onMounted(async () => {
 const migrateDb = async (db: Kysely<Database>) => {
   // await migrateDown(db, $q);
   await migrateUp(db, $q);
-};
-
-const syncTracksToDB = async () => {
-  $q.notify({
-    message: 'Syncing trakcs to db',
-  });
-
-  const db = await getDbInstance();
-
-  const d = db.getExecutor().adapter;
-  $q.notify({
-    type: 'info',
-    message: `version ${JSON.stringify(d)}`,
-  });
-  // Scan for tracks in the media library
-  for (let i = 0; i < mediaLibraryStore.tracks.length; i++) {
-    const track = mediaLibraryStore.tracks[i];
-    if (track) await localDb.syncTrackData(track);
-  }
 };
 
 const initMediaPlayer = async () => {

@@ -90,6 +90,8 @@ export default defineConfig((/* ctx */) => {
         notify: {
           position: 'bottom',
           classes: '!z-[9999]',
+          progress: true,
+          actions: [{ icon: 'bi-x', color: 'white' }],
         },
       },
 
