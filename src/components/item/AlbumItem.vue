@@ -2,7 +2,7 @@
 import { QBtn, QImg, useQuasar } from 'quasar';
 import type { VueClassProp, VueStyleProp } from 'quasar';
 import { Capacitor } from '@capacitor/core';
-import type { Album } from 'src/types/albums';
+import type { Album } from 'src/types/data';
 
 const { album } = defineProps<{
   album: Album;

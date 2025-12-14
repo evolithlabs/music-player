@@ -3,7 +3,6 @@ import { QBtn, QImg, QSpinner, useQuasar } from 'quasar';
 import type { VueClassProp, VueStyleProp } from 'quasar';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaPlayerStore } from 'src/stores/media-player';
-import type { Track, TrackDownloadStatus } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 import { FileTransfer } from '@capacitor/file-transfer';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -20,6 +19,7 @@ import {
   biSpotify,
 } from '@quasar/extras/bootstrap-icons';
 import { useMediaLibraryStore } from 'src/stores/media-library';
+import type { Track, TrackDownloadStatus } from 'src/types/data';
 
 const { track, queue, type, downloadStatus } = defineProps<{
   track: Track;

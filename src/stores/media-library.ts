@@ -1,8 +1,8 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { ref } from 'vue';
 import { MediaScanner } from 'capacitor-mediastore';
-import type { LocalTrack } from 'src/types/tracks';
 import { useLocalDB } from 'src/composables/local-db';
+import type { LocalTrack } from 'src/types/local';
 
 export const useMediaLibraryStore = defineStore('media-library', () => {
   const tracks = ref<LocalTrack[]>([]);

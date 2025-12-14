@@ -1,7 +1,7 @@
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 import { getDbInstance } from 'src/db';
 import type { DatabaseAlbum, DatabaseArtist, DatabaseTrack } from 'src/types/db';
-import type { LocalTrack } from 'src/types/tracks';
+import type { LocalTrack } from 'src/types/local';
 
 export const useLocalDB = () => {
   const getTracksCount = async () => {

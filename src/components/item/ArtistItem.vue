@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { QBtn, QImg, useQuasar } from 'quasar';
 import type { VueClassProp, VueStyleProp } from 'quasar';
-import type { Artist } from 'src/types/artists';
+import type { Artist } from 'src/types/data';
 
 const { artist } = defineProps<{
   artist: Artist;

@@ -42,10 +42,8 @@ import { QBtn, QCircularProgress, QIcon, QPage, useQuasar } from 'quasar';
 import LibrarySearchAndFilter from 'src/components/LibrarySearchAndFilter.vue';
 import { useLocalDB } from 'src/composables/local-db';
 import { useMediaLibraryStore } from 'src/stores/media-library';
-import type { Album } from 'src/types/albums';
-import type { Artist } from 'src/types/artists';
+import type { Album, Artist, Track } from 'src/types/data';
 import type { LibraryTab } from 'src/types/library';
-import type { Track } from 'src/types/tracks';
 import { nextTick, onMounted, ref, watch } from 'vue';
 
 const $q = useQuasar();

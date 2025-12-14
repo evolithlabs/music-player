@@ -61,9 +61,9 @@ import LibrarySearchAndFilter from 'src/components/LibrarySearchAndFilter.vue';
 import SpotifyOauth from 'src/components/SpotifyOauth.vue';
 import TrackItem from 'src/components/item/TrackItem.vue';
 import { useSpotifyAuthStore } from 'src/stores/spotify-auth';
+import type { Track, TrackDownloadStatus } from 'src/types/data';
 import type { LibraryTab } from 'src/types/library';
 import type { SpotifyTrackResponse } from 'src/types/spotify';
-import type { Track, TrackDownloadStatus } from 'src/types/tracks';
 import { getSpotifyTrackUrl } from 'src/utils/get-spotify-track-url';
 import { onMounted, ref } from 'vue';
 

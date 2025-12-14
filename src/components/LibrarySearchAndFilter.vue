@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { QIcon, QInput, QSpinnerBars, QTab, QTabPanel, QTabPanels, QTabs } from 'quasar';
 import TrackItem from 'src/components/item/TrackItem.vue';
-import type { Album } from 'src/types/albums';
 import type { LibraryTab } from 'src/types/library';
-import type { Track } from 'src/types/tracks';
 import AlbumItem from './item/AlbumItem.vue';
-import type { Artist } from 'src/types/artists';
 import ArtistItem from './item/ArtistItem.vue';
 import { useTemplateRef } from 'vue';
 import { useScroll } from '@vueuse/core';
+import type { Album, Artist, Track } from 'src/types/data';
 
 const { tracks, loading } = defineProps<{
   tracks: Track[];
@@ -105,7 +103,7 @@ const { arrivedState: tracksContainerArrivedState } = useScroll(tracksContainerE
         <div v-if="!artists.length && loading" class="text-center mt-16">
           <QSpinnerBars color="white" class="mx-auto text-5xl" />
         </div>
-        <div v-else class="text-center mt-16 text-xl">No artists found</div>
+        <div v-else-if="!artists.length" class="text-center mt-16 text-xl">No artists found</div>
       </QTabPanel>
 
       <QTabPanel name="albums" class="p-2 m-0 h-full">
@@ -120,7 +118,7 @@ const { arrivedState: tracksContainerArrivedState } = useScroll(tracksContainerE
         <div v-if="albums.length && loading" class="text-center mt-16">
           <QSpinnerBars color="white" class="mx-auto text-5xl" />
         </div>
-        <div v-else class="text-center mt-16 text-xl">No albums found</div>
+        <div v-else-if="!albums.length" class="text-center mt-16 text-xl">No albums found</div>
       </QTabPanel>
     </QTabPanels>
   </div>

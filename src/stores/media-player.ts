@@ -1,8 +1,8 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { computed, ref, onMounted } from 'vue';
-import type { Track } from 'src/types/tracks';
 import { Capacitor } from '@capacitor/core';
 import type { QueueSource } from '../types/media-player';
+import type { Track } from 'src/types/data';
 
 export const useMediaPlayerStore = defineStore(
   'media-player',
