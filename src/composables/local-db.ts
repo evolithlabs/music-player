@@ -213,7 +213,7 @@ export const useLocalDB = () => {
           await db
             .insertInto('tracks')
             .values({
-              name: null, // just for creation, we fill the data in he next step
+              name: null, // just for creation, we fill the data in the next step
             })
             .executeTakeFirst()
         ).insertId,
@@ -221,19 +221,21 @@ export const useLocalDB = () => {
     }
 
     // Fill track data
-    await db
-      .updateTable('tracks')
-      .set({
-        name: track.name.trim(),
-        duration: track.duration,
-        cover_path: track.coverPath,
-        path: track.path,
-        local_id: track.id,
-        spotify_id: track.spotify_id?.trim(),
-        year: track.year,
-      })
-      .where('id', '=', dbTrackId)
-      .execute();
+    if (dbTrackId) {
+      await db
+        .updateTable('tracks')
+        .set({
+          name: track.name,
+          duration: track.duration,
+          cover_path: track.coverPath,
+          path: track.path,
+          local_id: track.id,
+          spotify_id: track.spotify_id?.trim(),
+          year: track.year,
+        })
+        .where('id', '=', dbTrackId)
+        .execute();
+    }
 
     return dbTrackId;
   };
@@ -254,7 +256,7 @@ export const useLocalDB = () => {
             return eb('spotify_id', '=', track.album_id?.trim() ?? null).or(
               'name',
               '=',
-              track.album.trim(),
+              track.album,
             );
           } else {
             return eb('spotify_id', '=', track.album_id?.trim() ?? null);
@@ -270,7 +272,7 @@ export const useLocalDB = () => {
           await db
             .insertInto('albums')
             .values({
-              name: track.album.trim(),
+              name: track.album,
               cover_path: track.coverPath,
               spotify_id: track.album_id?.trim() ?? null,
             })

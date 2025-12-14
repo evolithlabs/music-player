@@ -22,6 +22,15 @@ export const useMediaLibraryStore = defineStore('media-library', () => {
     scanningTracks.value = false;
   };
 
+  const scanTrack = async (path: string) => {
+    const result = await MediaScanner.readTrackMetadata({
+      path: path,
+    });
+
+    tracks.value.push(result.file);
+    return result.file;
+  };
+
   const syncingTracksToDb = ref(false);
   const syncTracksToDB = async () => {
     // Scan for tracks in the media library
@@ -34,7 +43,19 @@ export const useMediaLibraryStore = defineStore('media-library', () => {
     syncingTracksToDb.value = false;
   };
 
-  return { tracks, scanTracks, scanningTracks, syncTracksToDB, syncingTracksToDb };
+  const syncTrackToDB = async (track: LocalTrack) => {
+    if (track) await localDb.syncTrackData(track);
+  };
+
+  return {
+    tracks,
+    scanTracks,
+    scanningTracks,
+    scanTrack,
+    syncTracksToDB,
+    syncTrackToDB,
+    syncingTracksToDb,
+  };
 });
 
 if (import.meta.hot) {

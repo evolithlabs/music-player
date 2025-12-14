@@ -235,7 +235,7 @@ const downloadTrack = async () => {
       });
     });
 
-    await FileTransfer.downloadFile({
+    const res = await FileTransfer.downloadFile({
       url: `${backendApi.defaults.baseURL}play-track/${track.id}?download=1`,
       path: fullPath,
       progress: true,
@@ -247,10 +247,15 @@ const downloadTrack = async () => {
       message: `Track downloaded`,
       caption: `${track.artist} - ${track.name}`,
       spinner: false,
-      timeout: 3500,
     });
 
     await progressListener.remove();
+
+    // Fetch track metadata and sync it in db
+    if (res.path) {
+      const localTrack = await mediaLibraryStore.scanTrack(res.path);
+      await mediaLibraryStore.syncTrackToDB(localTrack);
+    }
   } catch (error) {
     $q.notify({
       type: 'negative',
