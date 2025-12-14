@@ -30,6 +30,13 @@ export interface DatabaseTracksArtist {
   [key: string]: any;
 }
 
+export interface DatabaseAlbumsArtist {
+  id: number | null;
+  album_id: number | null;
+  artist_id: number | null;
+  [key: string]: any;
+}
+
 export interface DatabaseSettings {
   id: number | undefined;
   app_is_initialized: boolean | null;
@@ -40,6 +47,7 @@ interface Database {
   albums: DatabaseAlbum;
   artists: DatabaseArtist;
   tracks_artists: DatabaseTracksArtist;
+  albums_artists: DatabaseAlbumsArtist;
   settings: DatabaseSettings;
 }
 

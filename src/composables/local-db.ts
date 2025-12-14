@@ -66,6 +66,13 @@ export const useLocalDB = () => {
             .whereRef('albums.id', '=', 'tracks.album_id')
             .select(db.fn.countAll().as('count')),
         ).as('tracks'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('artists')
+            .innerJoin('albums_artists', 'albums.id', 'albums_artists.album_id')
+            .whereRef('albums_artists.artist_id', '=', 'artists.id')
+            .select(['name']),
+        ).as('artists'),
       ])
       .orderBy('name')
       .limit(limit)
@@ -86,9 +93,16 @@ export const useLocalDB = () => {
           eb
             .selectFrom('tracks')
             .innerJoin('tracks_artists', 'tracks.id', 'tracks_artists.track_id')
-            .whereRef('artists.id', '=', 'tracks_artists.artist_id')
+            .whereRef('tracks_artists.artist_id', '=', 'artists.id')
             .select(db.fn.countAll().as('count')),
         ).as('tracks'),
+        jsonObjectFrom(
+          eb
+            .selectFrom('albums')
+            .innerJoin('albums_artists', 'artists.id', 'albums_artists.artist_id')
+            .whereRef('albums_artists.album_id', '=', 'albums.id')
+            .select(db.fn.countAll().as('count')),
+        ).as('albums'),
       ])
       .orderBy('name')
       .limit(limit)
@@ -101,7 +115,8 @@ export const useLocalDB = () => {
 
     const dbTrackId = await saveTrack(track);
     const dbAlbumId = await saveAlbum(track);
-    const dbArtistIds = await saveArtists(track);
+    const dbTrackArtistIds = await saveTrackArtists(track);
+    const dbAlbumArtistIds = await saveAlbumArtists(track);
 
     // Add album to the track
     if (dbTrackId && dbAlbumId) {
@@ -114,9 +129,9 @@ export const useLocalDB = () => {
     }
 
     // Add artists to the track
-    if (dbTrackId && dbArtistIds?.length) {
-      for (let i = 0; i < dbArtistIds.length; i++) {
-        const dbArtistId = dbArtistIds[i];
+    if (dbTrackId && dbTrackArtistIds?.length) {
+      for (let i = 0; i < dbTrackArtistIds.length; i++) {
+        const dbArtistId = dbTrackArtistIds[i];
         if (dbArtistId) {
           const dbTrackArtistId = await db
             .selectFrom('tracks_artists')
@@ -137,6 +152,31 @@ export const useLocalDB = () => {
         }
       }
     }
+
+    // Add artists to the album
+    if (dbAlbumId && dbAlbumArtistIds?.length) {
+      for (let i = 0; i < dbAlbumArtistIds.length; i++) {
+        const dbArtistId = dbAlbumArtistIds[i];
+        if (dbArtistId) {
+          const dbAlbumArtistId = await db
+            .selectFrom('albums_artists')
+            .where('album_id', '=', dbAlbumId)
+            .where('artist_id', '=', dbArtistId)
+            .select('id')
+            .executeTakeFirst();
+          if (!dbAlbumArtistId) {
+            // Relation doesn't yet exist - create a new one
+            await db
+              .insertInto('albums_artists')
+              .values({
+                album_id: dbAlbumId,
+                artist_id: dbArtistId,
+              })
+              .execute();
+          }
+        }
+      }
+    }
   };
 
   const saveTrack = async (track: LocalTrack) => {
@@ -150,7 +190,7 @@ export const useLocalDB = () => {
         await db
           .selectFrom('tracks')
           .select('id')
-          .where('spotify_id', '=', track.spotify_id)
+          .where('spotify_id', '=', track.spotify_id.trim())
           .executeTakeFirst()
       )?.id;
     }
@@ -184,12 +224,12 @@ export const useLocalDB = () => {
     await db
       .updateTable('tracks')
       .set({
-        name: track.name,
+        name: track.name.trim(),
         duration: track.duration,
         cover_path: track.coverPath,
         path: track.path,
         local_id: track.id,
-        spotify_id: track.spotify_id,
+        spotify_id: track.spotify_id?.trim(),
         year: track.year,
       })
       .where('id', '=', dbTrackId)
@@ -211,9 +251,13 @@ export const useLocalDB = () => {
         .select('id')
         .where((eb) => {
           if (track.album) {
-            return eb('spotify_id', '=', track.album_id ?? null).or('name', '=', track.album);
+            return eb('spotify_id', '=', track.album_id?.trim() ?? null).or(
+              'name',
+              '=',
+              track.album.trim(),
+            );
           } else {
-            return eb('spotify_id', '=', track.album_id ?? null);
+            return eb('spotify_id', '=', track.album_id?.trim() ?? null);
           }
         })
         .executeTakeFirst()
@@ -226,9 +270,9 @@ export const useLocalDB = () => {
           await db
             .insertInto('albums')
             .values({
-              name: track.album,
+              name: track.album.trim(),
               cover_path: track.coverPath,
-              spotify_id: track.album_id ?? null,
+              spotify_id: track.album_id?.trim() ?? null,
             })
             .executeTakeFirst()
         ).insertId,
@@ -238,14 +282,29 @@ export const useLocalDB = () => {
     return dbAlbumId;
   };
 
-  const saveArtists = async (track: LocalTrack) => {
-    if (!track.artist || track.artist.length <= 0) return;
-
+  const saveTrackArtists = async (track: LocalTrack) => {
     // Find/Create artist
     const dbArtistIds: DatabaseArtist['id'][] = [];
-    if (track.artist_id) {
+    if (track.artist && track.artist_id) {
       const ids = track.artist_id.split(','); // artist_id = "drt7asdiad, 78asd8fd778, etc..."
       const names = track.artist.split(','); // artist = "NF, MGK, etc..."
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        const name = names[i];
+        const artist = await saveArtist(id, name);
+
+        if (artist) dbArtistIds.push(artist);
+      }
+    }
+    return dbArtistIds;
+  };
+
+  const saveAlbumArtists = async (track: LocalTrack) => {
+    // Find/Create artist
+    const dbArtistIds: DatabaseArtist['id'][] = [];
+    if (track.album_artist && track.album_artist_id) {
+      const ids = track.album_artist_id.split(','); // artist_id = "drt7asdiad, 78asd8fd778, etc..."
+      const names = track.album_artist.split(','); // artist = "NF, MGK, etc..."
       for (let i = 0; i < ids.length; i++) {
         const id = ids[i];
         const name = names[i];
@@ -269,7 +328,9 @@ export const useLocalDB = () => {
         await db
           .selectFrom('artists')
           .select('id')
-          .where((eb) => eb('spotify_id', '=', spotifyId ?? null).or('name', '=', name ?? null))
+          .where((eb) =>
+            eb('spotify_id', '=', spotifyId?.trim() ?? null).or('name', '=', name ?? null),
+          )
           .executeTakeFirst()
       )?.id;
     }
@@ -282,7 +343,7 @@ export const useLocalDB = () => {
             .insertInto('artists')
             .values({
               name: name,
-              spotify_id: spotifyId ?? null,
+              spotify_id: spotifyId?.trim() ?? null,
             })
             .executeTakeFirst()
         ).insertId,

@@ -18,6 +18,7 @@ export interface Artist {
   id: string;
   name: string;
   tracksCount: number;
+  albumsCount: number;
 }
 
 export interface Album {
@@ -25,4 +26,5 @@ export interface Album {
   name: string;
   coverPath: string | undefined | null;
   tracksCount: number;
+  artist: string;
 }

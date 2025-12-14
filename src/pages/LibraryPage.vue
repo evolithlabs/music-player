@@ -33,6 +33,8 @@
       :albums="albums"
       type="local"
       @load-tracks="onLoadMoreTracks"
+      @load-artists="onLoadMoreArtists"
+      @load-albums="onLoadMoreAlbums"
     ></LibrarySearchAndFilter>
   </QPage>
 </template>
@@ -79,14 +81,8 @@ const fetchTracksCount = async () => {
   }
 };
 
-const tracksPage = ref(0);
-const onLoadMoreTracks = async () => {
-  if (tracks.value.length >= tracksCount.value || fetchingTracks.value) return;
-
-  await fetchTracks(tracksPage.value + 1);
-};
-
 const tracks = ref<Track[]>([]);
+const tracksPage = ref(0);
 const fetchingTracks = ref(false);
 const fetchTracks = async (page: number) => {
   tracksPage.value = page;
@@ -126,9 +122,21 @@ const fetchTracks = async (page: number) => {
   fetchingTracks.value = false;
 };
 
+const onLoadMoreTracks = async () => {
+  if (tracks.value.length >= tracksCount.value || fetchingTracks.value) return;
+
+  await fetchTracks(tracksPage.value + 1);
+};
+
+const artistsCount = ref(10);
+// TODO: Get artists count
+
 const artists = ref<Artist[]>([]);
+const artistsPage = ref(0);
 const fetchingArtists = ref(false);
 const fetchArtists = async (page: number) => {
+  artistsPage.value = page;
+
   try {
     fetchingArtists.value = true;
     const databaseArtists = await localDb.fetchArtists(PAGE_SIZE, page * PAGE_SIZE);
@@ -139,6 +147,7 @@ const fetchArtists = async (page: number) => {
         id: dbArtist.id?.toString() ?? '-1',
         name: dbArtist.name ?? 'Unknown Title',
         tracksCount: Number(dbArtist.tracks?.count) || 0,
+        albumsCount: Number(dbArtist.albums?.count) || 0,
       };
 
       artists.value.push(artist);
@@ -154,9 +163,21 @@ const fetchArtists = async (page: number) => {
   fetchingArtists.value = false;
 };
 
+const onLoadMoreArtists = async () => {
+  if (artists.value.length >= artistsCount.value || fetchingArtists.value) return;
+
+  await fetchArtists(artistsPage.value + 1);
+};
+
+const albumsCount = ref(10);
+// TODO: Get albums count
+
 const albums = ref<Album[]>([]);
+const albumsPage = ref(0);
 const fetchingAlbums = ref(false);
 const fetchAlbums = async (page: number) => {
+  albumsPage.value = page;
+
   try {
     fetchingAlbums.value = true;
     const databaseAlbums = await localDb.fetchAlbums(PAGE_SIZE, page * PAGE_SIZE);
@@ -167,6 +188,7 @@ const fetchAlbums = async (page: number) => {
         id: dbAlbum.id?.toString() ?? '-1',
         name: dbAlbum.name ?? 'Unknown Title',
         coverPath: dbAlbum.cover_path,
+        artist: dbAlbum.artists.map((a) => a.name).join(', ') || 'Unknown artist',
         tracksCount: Number(dbAlbum.tracks?.count) || 0,
       };
 
@@ -181,6 +203,12 @@ const fetchAlbums = async (page: number) => {
   }
 
   fetchingAlbums.value = false;
+};
+
+const onLoadMoreAlbums = async () => {
+  if (albums.value.length >= albumsCount.value || fetchingAlbums.value) return;
+
+  await fetchAlbums(albumsPage.value + 1);
 };
 
 const scanProgress = ref(0);

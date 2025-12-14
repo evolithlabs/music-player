@@ -49,7 +49,7 @@ import { biHeadphones } from '@quasar/extras/bootstrap-icons';
 import type { Kysely } from 'kysely';
 import { QBtn, QIcon, QLinearProgress, useQuasar } from 'quasar';
 import { getDbInstance } from 'src/db';
-import { migrateUp } from 'src/db/migrations/migrator';
+import { migrateDown, migrateUp } from 'src/db/migrations/migrator';
 import { useMediaControlsStore } from 'src/stores/media-controls';
 import { useMediaLibraryStore } from 'src/stores/media-library';
 import { useMediaPlayerStore } from 'src/stores/media-player';
@@ -115,7 +115,7 @@ onMounted(async () => {
 });
 
 const migrateDb = async (db: Kysely<Database>) => {
-  // await migrateDown(db, $q);
+  await migrateDown(db, $q);
   await migrateUp(db, $q);
 };
 

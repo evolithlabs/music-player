@@ -70,10 +70,12 @@ const onClick = () => {};
       <h6 class="font-bold line-clamp-1 text-sm relative">
         {{ album.name }}
       </h6>
-      <div class="flex items-center gap-1">
-        <span class="text-xs line-clamp-1"
-          >{{ album.tracksCount }} {{ album.tracksCount > 1 ? 'tracks' : 'track' }}</span
-        >
+      <div class="flex items-center flex-nowrap gap-1">
+        <span class="text-xs line-clamp-1">{{ album.artist }}</span>
+        <span>•</span>
+        <span class="text-xs shrink-0">
+          {{ album.tracksCount }} {{ album.tracksCount != 1 ? 'tracks' : 'track' }}
+        </span>
       </div>
     </div>
     <div class="flex items-baseline ml-auto shrink-0 relative z-10">
