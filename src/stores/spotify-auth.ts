@@ -64,7 +64,6 @@ export const useSpotifyAuthStore = defineStore(
     };
 
     const generateAccessToken = async (code: string) => {
-      console.log('Generating spotify access token');
       // stored in the previous step
       const url = 'https://accounts.spotify.com/api/token';
       const payload = {
@@ -94,10 +93,9 @@ export const useSpotifyAuthStore = defineStore(
           scheduleTokenRefresh(response.expires_in);
         }
       } catch (error) {
-        console.error('Something went wrong while generating access token', error);
         $q.notify({
           type: 'negative',
-          message: 'Something went wrong while generating access token',
+          message: `Oops - Failed to generate Spotify access token`,
           caption: (error as Error).message,
         });
       }
@@ -134,7 +132,7 @@ export const useSpotifyAuthStore = defineStore(
       } catch (error) {
         $q.notify({
           type: 'negative',
-          message: 'Failed to validate Spotify access token',
+          message: `Oops - Failed to validate Spotify access token`,
           caption: (error as Error).message,
         });
       }

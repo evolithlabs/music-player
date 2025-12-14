@@ -110,11 +110,16 @@ const showTrackOptions = () => {
 };
 
 const imageButtonIcon = computed(() => {
-  if (type == 'local' || downloadStatus == 'completed') {
+  if (type == 'local') {
+    if (!mediaPlayerStore.isPlaying || mediaPlayerStore.currentTrack?.id != track.id) {
+      return biPlayFill;
+    } else {
+      return biPauseFill;
+    }
+  } else if (type == 'spotify' && downloadStatus == 'completed') {
     if (
       !mediaPlayerStore.isPlaying ||
-      (mediaPlayerStore.currentTrack?.id != track.id &&
-        mediaPlayerStore.currentTrack?.spotify_id != track.spotify_id)
+      mediaPlayerStore.currentTrack?.spotify_id != track.spotify_id
     ) {
       return biPlayFill;
     } else {
@@ -137,7 +142,6 @@ const onClick = async () => {
       await playPauseTrack();
     } else {
       // queue track for download
-      console.log('queuing for download');
       try {
         await backendApi.post<Record<string, TrackDownloadStatus>>('/queue-track', {
           spotify_track_id: track.id,
@@ -178,21 +182,27 @@ const playPauseTrack = async () => {
         type: 'misc',
       });
     } else {
-      await mediaPlayerStore.loadAndPlayTracks(
-        spotifyTrackLocalVersion.value ?? track,
-        [spotifyTrackLocalVersion.value ?? track],
-        {
+      const trackToPlay: Track = spotifyTrackLocalVersion.value
+        ? {
+            ...spotifyTrackLocalVersion.value,
+            artist: spotifyTrackLocalVersion.value?.artist ?? '',
+            album: spotifyTrackLocalVersion.value?.album ?? '',
+          }
+        : track;
+
+      if (trackToPlay) {
+        await mediaPlayerStore.loadAndPlayTracks(trackToPlay, [trackToPlay], {
           type: 'misc',
-        },
-      );
+        });
+      }
     }
 
     await mediaControlsStore.updateMetadata({
-      track: track.name,
-      artist: track.artist,
-      album: track.album,
+      track: track.name ?? 'Unknown',
+      artist: track.artist ?? 'Unknown',
+      album: track.album ?? 'Unknown',
       cover: track.coverPath ?? '/images/background-cover.jpg',
-      duration: track.duration,
+      duration: track.duration ?? 0,
       isPlaying: true,
       elapsed: 0,
     });

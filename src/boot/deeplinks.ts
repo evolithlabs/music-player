@@ -5,8 +5,6 @@ const boot: BootCallback = ({ router }) => {
   void CapacitorApp.addListener('appUrlOpen', (event) => {
     if (!event.url) return;
 
-    console.log('App url opened', event.url);
-
     // Remove scheme
     const withoutScheme = event.url.replace(/^.*?:\/\//, ''); // "spotify-callback/?code=..."
 

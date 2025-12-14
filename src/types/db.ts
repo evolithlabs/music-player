@@ -27,6 +27,7 @@ export interface DatabaseTracksArtist {
   id: number | null;
   track_id: number | null;
   artist_id: number | null;
+  [key: string]: any;
 }
 
 export interface DatabaseSettings {

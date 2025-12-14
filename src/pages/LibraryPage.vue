@@ -1,5 +1,5 @@
 <template>
-  <QPage class="text-white pb-footer pt-4">
+  <QPage class="text-white pb-footer pt-4 h-full flex flex-col">
     <div class="flex flex-col gap-2 mb-2">
       <h1 class="text-3xl flex items-center gap-2 font-bold mx-4">
         <QIcon name="bi-music-note-beamed" class="text-4xl" />
@@ -29,7 +29,10 @@
       v-model:query="searchQuery"
       v-model:tab="tab"
       :tracks="tracks"
+      :artists="artists"
+      :albums="albums"
       type="local"
+      @load-tracks="onLoadMoreTracks"
     ></LibrarySearchAndFilter>
   </QPage>
 </template>
@@ -37,34 +40,153 @@
 <script setup lang="ts">
 import { QBtn, QCircularProgress, QIcon, QPage, useQuasar } from 'quasar';
 import LibrarySearchAndFilter from 'src/components/LibrarySearchAndFilter.vue';
+import { useLocalDB } from 'src/composables/local-db';
 import { useMediaLibraryStore } from 'src/stores/media-library';
+import type { Album } from 'src/types/albums';
+import type { Artist } from 'src/types/artists';
 import type { LibraryTab } from 'src/types/library';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import type { Track } from 'src/types/tracks';
+import { nextTick, onMounted, ref, watch } from 'vue';
 
 const $q = useQuasar();
 const mediaLibraryStore = useMediaLibraryStore();
+const localDb = useLocalDB();
 
 const searchQuery = ref<string>('');
 const tab = ref<LibraryTab>('tracks');
 
-const tracks = computed(() => {
-  return mediaLibraryStore.tracks;
-});
-
-onMounted(() => {
+const PAGE_SIZE = 15;
+onMounted(async () => {
   if (mediaLibraryStore.scanningTracks) {
     scanProgress.value = 25;
   } else if (mediaLibraryStore.syncingTracksToDb) {
     scanProgress.value = 66;
   }
+
+  // Get tracks count
+  await fetchTracksCount();
+  await fetchTracks(0);
 });
+
+const tracksCount = ref(0);
+const fetchTracksCount = async () => {
+  try {
+    tracksCount.value = Number(await localDb.getTracksCount());
+  } catch (error) {
+    $q.notify({
+      message: `Oops - Failed to fetch tracks`,
+      type: 'negative',
+      caption: (error as Error).message,
+    });
+  }
+};
+
+const tracksPage = ref(0);
+const onLoadMoreTracks = async () => {
+  if (tracks.value.length >= tracksCount.value || fetchingTracks.value) return;
+
+  await fetchTracks(tracksPage.value + 1);
+};
+
+const tracks = ref<Track[]>([]);
+const fetchingTracks = ref(false);
+const fetchTracks = async (page: number) => {
+  tracksPage.value = page;
+
+  try {
+    fetchingTracks.value = true;
+    const databaseTracks = await localDb.fetchTracks(PAGE_SIZE, page * PAGE_SIZE);
+    if (page == 0) tracks.value = [];
+
+    const newTracks: Track[] = [];
+    databaseTracks.forEach((dbTrack) => {
+      const artistsStr = dbTrack.artists.map((dbArtist) => dbArtist.name).join(', ');
+      const track: Track = {
+        id: dbTrack.id?.toString() ?? '-1',
+        spotify_id: dbTrack.spotify_id,
+        name: dbTrack.name ?? 'Unknown Title',
+        artist: artistsStr.length ? artistsStr : 'Unknown',
+        album: dbTrack.album?.name ?? 'Unknown Album',
+        duration: dbTrack.duration ?? 0,
+        coverPath: dbTrack.cover_path,
+        year: dbTrack.year,
+        path: dbTrack.path ?? '',
+      };
+
+      newTracks.push(track);
+    });
+
+    tracks.value.push(...newTracks);
+  } catch (error) {
+    $q.notify({
+      message: `Oops - Failed to fetch tracks`,
+      type: 'negative',
+      caption: (error as Error).message,
+    });
+  }
+
+  fetchingTracks.value = false;
+};
+
+const artists = ref<Artist[]>([]);
+const fetchingArtists = ref(false);
+const fetchArtists = async (page: number) => {
+  try {
+    fetchingArtists.value = true;
+    const databaseArtists = await localDb.fetchArtists(PAGE_SIZE, page * PAGE_SIZE);
+    if (page == 0) artists.value = [];
+
+    databaseArtists.forEach((dbArtist) => {
+      const artist: Artist = {
+        id: dbArtist.id?.toString() ?? '-1',
+        name: dbArtist.name ?? 'Unknown Title',
+        tracksCount: Number(dbArtist.tracks?.count) || 0,
+      };
+
+      artists.value.push(artist);
+    });
+  } catch (error) {
+    $q.notify({
+      message: `Oops - Failed to fetch artists`,
+      type: 'negative',
+      caption: (error as Error).message,
+    });
+  }
+
+  fetchingArtists.value = false;
+};
+
+const albums = ref<Album[]>([]);
+const fetchingAlbums = ref(false);
+const fetchAlbums = async (page: number) => {
+  try {
+    fetchingAlbums.value = true;
+    const databaseAlbums = await localDb.fetchAlbums(PAGE_SIZE, page * PAGE_SIZE);
+    if (page == 0) albums.value = [];
+
+    databaseAlbums.forEach((dbAlbum) => {
+      const album: Album = {
+        id: dbAlbum.id?.toString() ?? '-1',
+        name: dbAlbum.name ?? 'Unknown Title',
+        coverPath: dbAlbum.cover_path,
+        tracksCount: Number(dbAlbum.tracks?.count) || 0,
+      };
+
+      albums.value.push(album);
+    });
+  } catch (error) {
+    $q.notify({
+      message: `Oops - Failed to fetch albums`,
+      type: 'negative',
+      caption: (error as Error).message,
+    });
+  }
+
+  fetchingAlbums.value = false;
+};
 
 const scanProgress = ref(0);
 const rescanTracks = async () => {
-  $q.notify({
-    message: 'Scanning local tracks',
-  });
-
   scanProgress.value = 0;
 
   await nextTick();
@@ -81,6 +203,7 @@ const rescanTracks = async () => {
   }, 1000);
 };
 
+// Watchers for updating ui for scanning tracks (if coming to page in the middle of a rescan)
 watch(
   () => mediaLibraryStore.scanningTracks,
   (newValue) => {
@@ -101,6 +224,32 @@ watch(
     }
   },
 );
+
+watch(tab, async (newTab, oldTab) => {
+  // await new Promise((r) => setTimeout(r, 1000));
+  switch (newTab) {
+    case 'tracks':
+      await fetchTracks(0);
+      break;
+    case 'artists':
+      await fetchArtists(0);
+      break;
+    case 'albums':
+      await fetchAlbums(0);
+      break;
+    default:
+      break;
+  }
+
+  // Performance fix - remove all data and re-fetch when user re-enters the tab
+  if (oldTab == 'tracks') {
+    tracks.value = tracks.value.slice(0, Math.min(tracks.value.length, PAGE_SIZE));
+  } else if (oldTab == 'artists') {
+    artists.value = artists.value.slice(0, Math.min(artists.value.length, PAGE_SIZE));
+  } else if (oldTab == 'albums') {
+    albums.value = albums.value.slice(0, Math.min(albums.value.length, PAGE_SIZE));
+  }
+});
 </script>
 
 <style scoped></style>

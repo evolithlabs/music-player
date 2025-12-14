@@ -93,6 +93,9 @@ export default defineConfig((/* ctx */) => {
           progress: true,
           actions: [{ icon: 'bi-x', color: 'white' }],
         },
+        ripple: {
+          color: 'black',
+        },
       },
 
       iconSet: 'bootstrap-icons', // Quasar icon set

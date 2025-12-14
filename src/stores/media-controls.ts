@@ -34,7 +34,6 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
 
     await CapacitorMusicControls.create(mergedOptions)
       .then(() => {
-        console.log('Music controls created');
         // Android listener - different from iOS
         document.addEventListener('controlsNotification', (event) => {
           const customEvent = event as MediaControlsEvent;
@@ -75,7 +74,6 @@ export const useMediaControlsStore = defineStore('media-controls', () => {
   const executeAction = async (
     event: MediaControlsEvent | { message: string; position: number },
   ) => {
-    console.log('executing action from media controls:', event.message, event.position);
     switch (event.message) {
       case 'music-controls-next':
         // next

@@ -27,7 +27,6 @@ export const useMediaPlayerStore = defineStore(
       // Find the starting index
       const index = tracksQueue.findIndex((t) => t.id === track.id);
       if (index === -1) {
-        console.error('Selected track not found in the source list.');
         return;
       }
       queueIndex.value = index;

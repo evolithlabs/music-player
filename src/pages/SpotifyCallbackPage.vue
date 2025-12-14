@@ -11,7 +11,6 @@ const code = ref<string>();
 onMounted(() => {
   const spotifyCode = route.query.code;
 
-  console.log('got code param', spotifyCode);
   if (typeof spotifyCode === 'string' && spotifyCode && spotifyCode.length) {
     code.value = spotifyCode;
   }

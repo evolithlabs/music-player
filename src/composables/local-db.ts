@@ -1,9 +1,102 @@
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 import { getDbInstance } from 'src/db';
 import type { DatabaseAlbum, DatabaseArtist, DatabaseTrack } from 'src/types/db';
-import type { Track } from 'src/types/tracks';
+import type { LocalTrack } from 'src/types/tracks';
 
 export const useLocalDB = () => {
-  const syncTrackData = async (track: Track) => {
+  const getTracksCount = async () => {
+    const db = await getDbInstance();
+
+    const countRow = await db
+      .selectFrom('tracks')
+      .select(db.fn.countAll().as('count'))
+      .executeTakeFirst();
+    return countRow?.count;
+  };
+
+  const fetchTracks = async (limit: number, offset: number) => {
+    const db = await getDbInstance();
+
+    return await db
+      .selectFrom('tracks')
+      .select((eb) => [
+        'id',
+        'album_id',
+        'duration',
+        'cover_path',
+        'name',
+        'path',
+        'spotify_id',
+        'year',
+        'local_id',
+        jsonObjectFrom(
+          eb
+            .selectFrom('albums')
+            .select(['id', 'name'])
+            .whereRef('albums.id', '=', 'tracks.album_id')
+            .orderBy('albums.name'),
+        ).as('album'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('artists')
+            .innerJoin('tracks_artists', 'tracks_artists.artist_id', 'artists.id')
+            .whereRef('tracks_artists.track_id', '=', 'tracks.id')
+            .select(['artists.id', 'artists.name'])
+            .orderBy('artists.name'),
+        ).as('artists'),
+      ])
+      .orderBy('name')
+      .limit(limit)
+      .offset(offset)
+      .execute();
+  };
+
+  const fetchAlbums = async (limit: number, offset: number) => {
+    const db = await getDbInstance();
+
+    return await db
+      .selectFrom('albums')
+      .select((eb) => [
+        'id',
+        'name',
+        'cover_path',
+        jsonObjectFrom(
+          eb
+            .selectFrom('tracks')
+            .whereRef('albums.id', '=', 'tracks.album_id')
+            .select(db.fn.countAll().as('count')),
+        ).as('tracks'),
+      ])
+      .orderBy('name')
+      .limit(limit)
+      .offset(offset)
+      .execute();
+  };
+
+  const fetchArtists = async (limit: number, offset: number) => {
+    const db = await getDbInstance();
+
+    return await db
+      .selectFrom('artists')
+      .select((eb) => [
+        'id',
+        'name',
+        'spotify_id',
+        jsonObjectFrom(
+          eb
+            .selectFrom('tracks')
+            .innerJoin('tracks_artists', 'tracks.id', 'tracks_artists.track_id')
+            .whereRef('artists.id', '=', 'tracks_artists.artist_id')
+            .select(db.fn.countAll().as('count')),
+        ).as('tracks'),
+      ])
+      .orderBy('name')
+      .limit(limit)
+      .offset(offset)
+      .execute();
+  };
+
+  const syncTrackData = async (track: LocalTrack) => {
     const db = await getDbInstance();
 
     const dbTrackId = await saveTrack(track);
@@ -46,7 +139,7 @@ export const useLocalDB = () => {
     }
   };
 
-  const saveTrack = async (track: Track) => {
+  const saveTrack = async (track: LocalTrack) => {
     const db = await getDbInstance();
 
     // Find/Create track
@@ -105,7 +198,7 @@ export const useLocalDB = () => {
     return dbTrackId;
   };
 
-  const saveAlbum = async (track: Track) => {
+  const saveAlbum = async (track: LocalTrack) => {
     if (!track.album || track.album.length <= 0) return;
 
     const db = await getDbInstance();
@@ -116,7 +209,13 @@ export const useLocalDB = () => {
       await db
         .selectFrom('albums')
         .select('id')
-        .where((eb) => eb('spotify_id', '=', track.album_id ?? null).or('name', '=', track.album))
+        .where((eb) => {
+          if (track.album) {
+            return eb('spotify_id', '=', track.album_id ?? null).or('name', '=', track.album);
+          } else {
+            return eb('spotify_id', '=', track.album_id ?? null);
+          }
+        })
         .executeTakeFirst()
     )?.id;
 
@@ -139,7 +238,7 @@ export const useLocalDB = () => {
     return dbAlbumId;
   };
 
-  const saveArtists = async (track: Track) => {
+  const saveArtists = async (track: LocalTrack) => {
     if (!track.artist || track.artist.length <= 0) return;
 
     // Find/Create artist
@@ -193,5 +292,5 @@ export const useLocalDB = () => {
     return dbArtistId;
   };
 
-  return { syncTrackData };
+  return { syncTrackData, fetchTracks, getTracksCount, fetchAlbums, fetchArtists };
 };

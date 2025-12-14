@@ -23,7 +23,6 @@ onMounted(async () => {
 
 const isAuthorizing = ref(false);
 const loginWithSpotify = () => {
-  console.log('Connecting to Spotify…');
   isAuthorizing.value = true;
   spotifyAuthStore.authenticate();
 };

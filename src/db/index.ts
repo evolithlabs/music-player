@@ -1,4 +1,4 @@
-import { Kysely } from 'kysely';
+import { Kysely, ParseJSONResultsPlugin } from 'kysely';
 import CapacitorSQLiteKyselyDialect from 'capacitor-sqlite-kysely';
 import {
   CapacitorSQLite,
@@ -29,6 +29,7 @@ export const getDbInstance = async () => {
 
     db = new Kysely<Database>({
       dialect: new CapacitorSQLiteKyselyDialect(sqlite, { name: DB_NAME }),
+      plugins: [new ParseJSONResultsPlugin()],
     });
 
     return db;

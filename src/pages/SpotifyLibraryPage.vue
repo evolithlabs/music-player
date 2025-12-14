@@ -1,5 +1,5 @@
 <template>
-  <QPage class="text-white pt-4 pb-footer">
+  <QPage class="text-white pt-4 pb-footer h-full">
     <div class="flex flex-col gap-2 mb-2">
       <h1 class="text-3xl flex items-center gap-2 font-bold mx-4">
         <QIcon name="bi-spotify" class="text-4xl" />
@@ -30,6 +30,9 @@
         v-model:query="searchQuery"
         v-model:tab="tab"
         :tracks="tracks"
+        :artists="[]"
+        :albums="[]"
+        :offset="15"
         type="spotify"
         :loading="fetchingTracks"
         @update:query="fetchTracks"
@@ -37,6 +40,7 @@
         <template #track="{ track, queue, type }">
           <TrackItem
             :track="track"
+            :key="track.id"
             :queue="queue"
             :type="type"
             :download-status="tracksDownloadStatuses[track.id]"
@@ -76,7 +80,7 @@ onMounted(async () => {
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to validate Spotify access token',
+      message: `Oops - Failed to validate Spotify access token`,
       caption: (error as AxiosError).message,
     });
   }
@@ -120,7 +124,7 @@ const fetchTracks = async () => {
       // Map SpotifyTrack to your Track type and add to tracks array
       const track: Track = {
         id: spotifyTrack.id ?? '-1',
-        spotify_id: spotifyTrack.id ?? '-1',
+        spotify_id: spotifyTrack.id,
         name: spotifyTrack.name ?? 'Unknown Title',
         artist: spotifyTrack.artists?.map((artist) => artist.name).join(', ') ?? 'Unknown Artist',
         album: spotifyTrack.album?.name ?? 'Unknown Album',
@@ -159,7 +163,7 @@ const fetchTracks = async () => {
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: 'Something happened while fetching Spotify tracks',
+      message: `Oops - Failed to fetch Spotify tracks`,
       caption: (error as AxiosError).message,
     });
   }

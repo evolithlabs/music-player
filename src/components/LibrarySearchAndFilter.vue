@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import {
-  QIcon,
-  QInput,
-  QItem,
-  QSpinnerBars,
-  QTab,
-  QTabPanel,
-  QTabPanels,
-  QTabs,
-  QVirtualScroll,
-} from 'quasar';
+import { QIcon, QInput, QSpinnerBars, QTab, QTabPanel, QTabPanels, QTabs } from 'quasar';
 import TrackItem from 'src/components/item/TrackItem.vue';
+import type { Album } from 'src/types/albums';
 import type { LibraryTab } from 'src/types/library';
 import type { Track } from 'src/types/tracks';
+import AlbumItem from './item/AlbumItem.vue';
+import type { Artist } from 'src/types/artists';
+import ArtistItem from './item/ArtistItem.vue';
+import { useTemplateRef } from 'vue';
+import { useScroll } from '@vueuse/core';
 
 const { tracks, loading } = defineProps<{
   tracks: Track[];
+  artists: Artist[];
+  albums: Album[];
   loading?: boolean | undefined;
   type: 'local' | 'spotify';
+}>();
+
+const emit = defineEmits<{
+  loadTracks: [];
 }>();
 
 const queryModel = defineModel<string>('query', {
@@ -27,10 +29,20 @@ const queryModel = defineModel<string>('query', {
 const tabModel = defineModel<LibraryTab>('tab', {
   default: 'tracks',
 });
+
+const tracksContainerEl = useTemplateRef('tracksContainer');
+const { arrivedState: tracksContainerArrivedState } = useScroll(tracksContainerEl, {
+  offset: { bottom: 25 },
+  onScroll: () => {
+    if (tracksContainerArrivedState.bottom) {
+      emit('loadTracks');
+    }
+  },
+});
 </script>
 
 <template>
-  <div>
+  <div class="h-full flex flex-col">
     <QInput
       v-model="queryModel"
       rounded
@@ -41,7 +53,7 @@ const tabModel = defineModel<LibraryTab>('tab', {
       :input-style="{
         color: 'white',
       }"
-      class="grow bg-glass !bg-zinc-800 search-input mx-4 border px-4"
+      class="bg-glass !bg-zinc-800 search-input mx-4 border px-4"
     >
       <template v-if="queryModel" v-slot:append>
         <QIcon name="bi-x-circle" @click.stop.prevent="queryModel = ''" class="text-white/80" />
@@ -55,27 +67,61 @@ const tabModel = defineModel<LibraryTab>('tab', {
       <QTab name="albums" label="Albums" :ripple="false" />
     </QTabs>
 
-    <QTabPanels v-model="tabModel" animated swipeable class="grow bg-transparent">
-      <QTabPanel name="tracks" class="p-2 m-0 grow">
-        <QVirtualScroll
-          v-if="tracks.length"
-          :items="tracks"
-          :virtual-scroll-item-size="56"
-          v-slot="{ item, index }"
-        >
-          <QItem :key="index" dense class="p-0 m-0">
-            <slot name="track" :track="item as Track" :queue="tracks" :type="type">
-              <TrackItem :track="item" :queue="tracks" :type="type" class="p-1.5"></TrackItem>
+    <QTabPanels
+      v-model="tabModel"
+      animated
+      swipeable
+      keep-alive
+      class="grow bg-transparent h-[25rem]"
+    >
+      <QTabPanel name="tracks" class="p-2 m-0 h-full">
+        <div ref="tracksContainer" class="h-full overflow-scroll">
+          <template v-for="track in tracks">
+            <slot name="track" :track="track" :queue="tracks" :type="type">
+              <TrackItem
+                :key="track.id"
+                :track="track"
+                :queue="tracks"
+                :type="type"
+                class="p-1.5"
+              ></TrackItem>
             </slot>
-          </QItem>
-        </QVirtualScroll>
-        <div v-else-if="loading" class="text-center mt-16">
+          </template>
+        </div>
+        <div v-if="!tracks.length && loading" class="text-center mt-16">
           <QSpinnerBars color="white" class="mx-auto text-5xl" />
         </div>
-        <div v-else class="text-center mt-16 text-xl">No tracks found</div>
+        <div v-else-if="!tracks.length" class="text-center mt-16 text-xl">No tracks found</div>
       </QTabPanel>
 
-      <QTabPanel name="playlists">playlists</QTabPanel>
+      <QTabPanel name="artists" class="p-2 m-0 h-full">
+        <div ref="artistsContainer">
+          <template v-for="artist in artists">
+            <slot name="artist" :artist="artist" :type="type">
+              <ArtistItem :key="artist.id" :artist="artist" :type="type" class="p-1.5"></ArtistItem>
+            </slot>
+          </template>
+        </div>
+        <div v-if="!artists.length && loading" class="text-center mt-16">
+          <QSpinnerBars color="white" class="mx-auto text-5xl" />
+        </div>
+        <div v-else class="text-center mt-16 text-xl">No artists found</div>
+      </QTabPanel>
+
+      <QTabPanel name="albums" class="p-2 m-0 h-full">
+        <div ref="albumsContainer">
+          <slot />
+          <template v-for="album in albums">
+            <slot name="album" :album="album" :type="type">
+              <AlbumItem :key="album.id" :album="album" :type="type" class="p-1.5"></AlbumItem>
+            </slot>
+          </template>
+        </div>
+        <div v-if="albums.length && loading" class="text-center mt-16">
+          <QSpinnerBars color="white" class="mx-auto text-5xl" />
+        </div>
+        <div v-else class="text-center mt-16 text-xl">No albums found</div>
+      </QTabPanel>
     </QTabPanels>
   </div>
 </template>
