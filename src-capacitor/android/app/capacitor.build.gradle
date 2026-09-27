@@ -13,6 +13,7 @@ dependencies {
     implementation project(':capacitor-app')
     implementation project(':capacitor-file-transfer')
     implementation project(':capacitor-filesystem')
+    implementation project(':mediagrid-capacitor-native-audio')
     implementation project(':capacitor-mediastore')
     implementation project(':capacitor-music-controls-plugin')
 
