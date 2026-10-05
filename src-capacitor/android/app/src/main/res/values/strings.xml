@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Groovio Music</string>
-    <string name="title_activity_main">Groovio Music</string>
-    <string name="package_name">org.capacitor.quasar.app</string>
-    <string name="custom_url_scheme">org.capacitor.quasar.app</string>
-    <!-- Describes the service in your app settings once installed -->
-    <string name="audio_player_service_description">Allows for audio to play in the background.</string>
-</resources>
