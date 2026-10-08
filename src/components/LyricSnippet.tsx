@@ -1,4 +1,5 @@
-import { memo, useEffect } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { memo, useCallback, useLayoutEffect, useRef } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { Easing, SharedValue, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -13,10 +14,21 @@ export function LyricSnippet({ lyrics, time, failed, compact = false, height, on
   const windowHeight = height ?? theme.dock.lyricHeight;
   const sectionStyle = [styles.section, compact && styles.compact, height !== undefined && { height, minHeight: 0, marginVertical: 0, flexShrink: 0 }];
   const index = lyrics?.kind === 'synced' ? activeLyricIndex(lyrics.lines, time) : -1;
-  const rowHeight = theme.dock.lyricHeight / 3;
+  const rowHeight = theme.space.lg + theme.space.md;
   const centerOffset = (windowHeight - rowHeight) / 2;
-  const offset = useSharedValue(centerOffset - (index + 2) * rowHeight);
-  useEffect(() => { offset.value = withTiming(centerOffset - (index + 2) * rowHeight, { duration: 650, easing: Easing.inOut(Easing.cubic) }); }, [index, rowHeight, centerOffset, offset]);
+  const target = centerOffset - (index + 2) * rowHeight;
+  const offset = useSharedValue(target);
+  const latestTarget = useRef(target);
+  const previous = useRef<{ lines?: Lyrics['lines']; rowHeight: number; centerOffset: number }>(undefined);
+  useLayoutEffect(() => {
+    latestTarget.current = target;
+    // Loading lyrics and laying out the player should place the line immediately.
+    // Only subsequent playback changes slide between lines.
+    const animate = previous.current?.lines === lyrics?.lines && previous.current?.rowHeight === rowHeight && previous.current?.centerOffset === centerOffset;
+    offset.value = animate ? withTiming(target, { duration: 650, easing: Easing.inOut(Easing.cubic) }) : target;
+    previous.current = { lines: lyrics?.lines, rowHeight, centerOffset };
+  }, [lyrics?.lines, rowHeight, centerOffset, target, offset]);
+  useFocusEffect(useCallback(() => { offset.set(latestTarget.current); }, [offset]));
   const motion = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value }] }));
   if (!lyrics || lyrics.kind !== 'synced') {
     const message = failed ? 'Lyrics couldn’t load. Retry from song options.' : !lyrics ? 'Finding timed lyrics…' : lyrics.kind === 'instrumental' ? 'Instrumental' : lyrics.kind === 'unsynced' ? 'Timed lyrics aren’t available for this song.' : 'No timed lyrics found for this song.';
@@ -34,7 +46,7 @@ const SnippetLine = memo(function SnippetLine({ text, row, rowHeight, windowHeig
   const styles = useThemeStyles(createStyles);
   const emphasis = useAnimatedStyle(() => {
     const distance = Math.min(1, Math.abs((row + 0.5) * rowHeight + offset.value - windowHeight / 2) / rowHeight);
-    return { opacity: 1 - distance * 0.7, transform: [{ scale: 1 - distance * 0.04 }] };
+    return { opacity: 1 - distance * 0.7 };
   });
   return <View aria-hidden={hidden} style={[styles.line, { height: rowHeight }]}><Animated.Text numberOfLines={2} style={[styles.current, emphasis]}>{text}</Animated.Text></View>;
 });
@@ -44,6 +56,6 @@ const createStyles = (theme: Theme) => ({
   window: { width: '100%' as const, overflow: 'hidden' as const },
   line: { justifyContent: 'center' as const, alignItems: 'center' as const },
   compact: { marginVertical: theme.space.sm },
-  current: { ...theme.type.body, lineHeight: theme.space.lg, color: theme.colors.text, textAlign: 'center' as const },
+  current: { ...theme.type.caption, width: '100%' as const, color: theme.colors.text, textAlign: 'center' as const },
   notice: { ...theme.type.caption, color: theme.colors.muted, textAlign: 'center' as const },
 });

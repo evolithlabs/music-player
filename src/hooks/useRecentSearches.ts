@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { localPreferences } from '../database';
-import { mergeSearchHistory, parseSearchHistory, RecentSearchSong } from '../utils/search-history';
+import { mergeSearchHistory, parseSearchHistory, RecentSearchSong, stableSearchHistory } from '../utils/search-history';
 
 const key = 'groovio.selected-search-songs';
 
@@ -30,8 +30,10 @@ export function useRecentSearches() {
   const remember = useCallback((latest: RecentSearchSong[]) => {
     if (!latest.length) return;
     current.current = mergeSearchHistory(latest, current.current);
-    setSongs(current.current);
+    // Persist newest-first history, but keep the visible rows in place while playing.
+    setSongs((visible) => stableSearchHistory(visible, current.current));
     if (ready.current) persist(current.current);
   }, [persist]);
-  return { songs, remember, error };
+  const refresh = useCallback(() => setSongs(current.current), []);
+  return { songs, remember, refresh, error };
 }

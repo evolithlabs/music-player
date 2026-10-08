@@ -1,7 +1,7 @@
 import type { Track } from '../types/music';
 import type { RepeatMode } from './playback';
 
-export type PlaybackSession = { trackId: string; position: number; queueIds: string[] | null; historyIds: string[]; shuffle: boolean; repeat: RepeatMode };
+export type PlaybackSession = { trackId: string; position: number; queueIds: string[] | null; historyIds: string[]; shuffle: boolean; repeat: RepeatMode; playlistId?: string };
 
 export function parsePlaybackSession(value: string | null): PlaybackSession | null {
   if (!value) return null;
@@ -9,7 +9,8 @@ export function parsePlaybackSession(value: string | null): PlaybackSession | nu
     const session = JSON.parse(value);
     if (!session || typeof session.trackId !== 'string' || !session.trackId || !Number.isFinite(session.position)) return null;
     const ids = (items: unknown): string[] => Array.isArray(items) ? items.filter((id): id is string => typeof id === 'string' && !!id) : [];
-    return { trackId: session.trackId, position: Math.max(0, session.position), queueIds: Array.isArray(session.queueIds) ? [...new Set(ids(session.queueIds))] : null, historyIds: ids(session.historyIds).slice(-50), shuffle: session.shuffle === true, repeat: session.repeat === 'all' || session.repeat === 'one' ? session.repeat : 'off' };
+    const playlist = typeof session.playlistId === 'string' && session.playlistId && Array.isArray(session.queueIds) && session.queueIds.includes(session.trackId) ? { playlistId: session.playlistId } : {};
+    return { trackId: session.trackId, position: Math.max(0, session.position), queueIds: Array.isArray(session.queueIds) ? [...new Set(ids(session.queueIds))] : null, historyIds: ids(session.historyIds).slice(-50), shuffle: session.shuffle === true, repeat: session.repeat === 'all' || session.repeat === 'one' ? session.repeat : 'off', ...playlist };
   } catch { return null; }
 }
 

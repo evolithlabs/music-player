@@ -1,13 +1,13 @@
-import { localPreferences } from '../database';
+import { localPreferences } from '../../database';
 import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { FilterChips } from '../components/FilterChips';
-import { PageHeader } from '../components/PageHeader';
-import { Screen } from '../components/Screen';
-import { useScreenBottomInset } from '../hooks/useScreenBottomInset';
-import { useTheme, useThemeStyles } from '../state/ThemeProvider';
-import { Theme } from '../theme';
+import { FilterChips } from '../../components/FilterChips';
+import { PageHeader } from '../../components/PageHeader';
+import { Screen } from '../../components/Screen';
+import { useScreenBottomInset } from '../../hooks/useScreenBottomInset';
+import { useTheme, useThemeStyles } from '../../state/ThemeProvider';
+import { Theme } from '../../theme';
 
 const frequencies = ['60', '150', '400', '1K', '2.4K', '6K', '14K'];
 const presets = { Flat: [0, 0, 0, 0, 0, 0, 0], 'Bass Boost': [5, 4, 2, 0, -1, 0, 1], Vocal: [-2, -1, 2, 4, 3, 1, -1], Treble: [-1, -1, 0, 0, 2, 4, 5] };

@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { useIsFocused } from 'expo-router/react-navigation';
 import { ScrollView, Text, View } from 'react-native';
 
-import { PageHeader } from '../components/PageHeader';
-import { Screen } from '../components/Screen';
-import { Recessed } from '../components/Matte';
-import { getDatabase } from '../database';
-import type { ListeningStats } from '../database/types';
-import { useLibrary } from '../state/LibraryProvider';
-import { useScreenBottomInset } from '../hooks/useScreenBottomInset';
-import { useThemeStyles } from '../state/ThemeProvider';
-import { Theme } from '../theme';
+import { PageHeader } from '../../components/PageHeader';
+import { Screen } from '../../components/Screen';
+import { Recessed } from '../../components/Matte';
+import { getDatabase } from '../../database';
+import type { ListeningStats } from '../../database/types';
+import { useLibrary } from '../../state/LibraryProvider';
+import { useScreenBottomInset } from '../../hooks/useScreenBottomInset';
+import { useThemeStyles } from '../../state/ThemeProvider';
+import { Theme } from '../../theme';
 
 export default function AboutScreen() {
   const styles = useThemeStyles(createStyles);

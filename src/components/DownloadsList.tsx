@@ -1,76 +1,93 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 
 import { useDownloads } from '../state/DownloadsProvider';
 import { useLibrary } from '../state/LibraryProvider';
 import { usePlayback } from '../state/PlaybackProvider';
-import { usePlaylists } from '../state/PlaylistProvider';
 import { useTheme, useThemeStyles } from '../state/ThemeProvider';
 import { Theme } from '../theme';
-import { Track } from '../types/music';
-import { matchesCatalog } from '../utils/catalog';
+import { CatalogTrack, Track } from '../types/music';
+import { matchesCatalog, sameCatalog } from '../utils/catalog';
+import { downloadStatus } from '../utils/downloads';
+import { SongArtist } from './SongArtist';
 import { Artwork } from './Artwork';
 import { BottomSheet } from './BottomSheet';
-import { IconButton, RoundButton } from './Matte';
+import { IconButton } from './Matte';
 import { SongActions } from './SongActions';
 
-const statusLabels = { queued: 'Queued', resolving: 'Finding metadata', downloading: 'Preparing audio', completed: 'Saving to your library', failed: 'Service download failed' };
+type DownloadSong = { track?: Track; catalog: CatalogTrack; serviceUrl: string };
 
 export function DownloadsDrawer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const [playlistTrack, setPlaylistTrack] = useState<Track>();
-  return <><BottomSheet visible={visible && !playlistTrack} title="Downloads" onClose={onClose} scrollable={false}><DownloadsList drawer onAddToPlaylist={setPlaylistTrack} /></BottomSheet>{playlistTrack && <SongActions key={playlistTrack.id} track={playlistTrack} initialMode="playlists" onClose={() => setPlaylistTrack(undefined)} />}</>;
+  const [song, setSong] = useState<DownloadSong>();
+  const downloads = useDownloads();
+  return <><BottomSheet visible={visible && !song} title="Downloads" onClose={onClose} scrollable={false}><DownloadsList drawer onNavigateArtist={onClose} onOptions={setSong} /></BottomSheet>{song && <SongActions track={song.track} catalog={song.catalog} onDownload={(play) => downloads.queue(song.serviceUrl, song.catalog, play)} onClose={() => setSong(undefined)} />}</>;
 }
 
-export function DownloadsList({ bottomPadding = 0, drawer = false, onAddToPlaylist }: { bottomPadding?: number; drawer?: boolean; onAddToPlaylist?: (track: Track) => void }) {
+export function DownloadsList({ bottomPadding = 0, drawer = false, onOptions, onNavigateArtist }: { bottomPadding?: number; drawer?: boolean; onOptions?: (song: DownloadSong) => void; onNavigateArtist?: () => void }) {
   const styles = useThemeStyles(createStyles);
   const { theme } = useTheme();
-  const { entries, error, retry } = useDownloads();
+  const downloads = useDownloads();
+  const { entries, error, ready, retry } = downloads;
   const { tracks } = useLibrary();
   const playback = usePlayback();
-  const playlists = usePlaylists();
-  const [playlistTrack, setPlaylistTrack] = useState<Track>();
+  const [song, setSong] = useState<DownloadSong>();
   const [busy, setBusy] = useState<string | null>(null);
-  const [retryError, setRetryError] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{ key: string; message: string } | null>(null);
+  const [expandedError, setExpandedError] = useState<string | null>(null);
   return <>
-    {(error || retryError) && <Text accessibilityRole="alert" style={styles.error}>{retryError || error}</Text>}
-    <FlatList style={drawer ? styles.drawer : styles.page} data={entries} keyExtractor={(entry) => `${entry.serviceUrl}:${entry.job.id}`} contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]} showsVerticalScrollIndicator={false}
+    {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+    <FlatList style={[styles.fullWidth, drawer ? styles.drawer : styles.page]} data={entries} keyExtractor={(entry) => `${entry.serviceUrl}:${entry.job.id}`} contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]} showsVerticalScrollIndicator={false}
       ListEmptyComponent={<Text style={styles.empty}>Find a track in Search and tap Download to add it here.</Text>}
       renderItem={({ item }) => {
+        const key = `${item.serviceUrl}:${item.job.id}`;
         const failed = item.job.status === 'failed' || item.transfer === 'failed';
         const track = tracks.find((song) => song.fileState !== 'missing' && (song.id === `service-${item.job.id}` || matchesCatalog(song, item.job.metadata)));
-        const available = !!track && track.fileState !== 'missing';
-        const selected = playback.track?.id === track?.id;
-        const label = item.transfer === 'saved' ? available ? null : 'Audio file missing' : item.transfer === 'failed' ? 'Could not save to device' : statusLabels[item.job.status];
-        return <View style={styles.card}>
-          <View style={styles.row}><Artwork uri={track?.artworkUri ?? item.job.metadata.coverUrl} size={theme.size.smallControl} square /><View style={styles.trackText}><Text numberOfLines={1} style={styles.title}>{item.job.metadata.title || 'Queued recording'}</Text><Text numberOfLines={1} style={styles.muted}>{item.job.metadata.artist}</Text></View>
-            <IconButton family="material-community" icon="playlist-plus" label={`Add ${item.job.metadata.title} to playlist`} disabled={!available || !playlists.ready} onPress={() => { if (track) (onAddToPlaylist ?? setPlaylistTrack)(track); }} />
-            <RoundButton icon={selected && playback.playing ? 'pause' : 'play'} label={`${selected && playback.playing ? 'Pause' : 'Play'} ${item.job.metadata.title}`} size="track" filled active disabled={!available} onPress={() => { if (!track) return; if (selected) { if (!playback.playing) playback.recordSelection(track.id); playback.toggle(); } else playback.selectTrack(track); }} />
+        const available = !!track;
+        const selected = !!playback.track && matchesCatalog(playback.track, item.job.metadata);
+        const label = item.transfer === 'saved' ? available ? null : 'Audio file missing' : item.transfer === 'failed' ? 'Could not save to device' : item.job.status === 'failed' ? 'Download failed' : null;
+        const status = busy === key ? { compact: null, description: 'Retrying download' } : downloadStatus(item);
+        const failureReason = retryError?.key === key ? retryError.message : failed ? item.transferError || item.job.error || 'Please try again.' : null;
+        const canRetry = failed || (item.transfer === 'saved' && !available);
+        async function retryDownload() {
+          setBusy(key); setRetryError(null); setExpandedError(null);
+          try { await retry(item); } catch { setRetryError({ key, message: 'Could not retry this download. Please try again.' }); }
+          finally { setBusy(null); }
+        }
+        function play() {
+          router.push('/now-playing');
+          if (playback.preparing && sameCatalog(playback.preparing.catalog, item.job.metadata)) return;
+          if (selected && playback.loaded) { if (!playback.playing) playback.toggle(); }
+          else if (track) playback.selectTrack(track);
+          else void playback.playCatalog(item.serviceUrl, item.job.metadata).catch(() => {});
+        }
+        return <View style={styles.card}><Pressable accessibilityRole="button" accessibilityLabel={`Play ${item.job.metadata.title}`} accessibilityState={{ selected }} onPress={play} style={styles.playArea} />
+          <View style={styles.row}><View pointerEvents="none" style={styles.details}><Artwork uri={track?.artworkUri ?? item.job.metadata.coverUrl} square playing={selected && playback.playing} /><View style={styles.trackText}><Text numberOfLines={1} style={[styles.title, selected && styles.activeTitle]}>{item.job.metadata.title || 'Queued recording'}</Text><SongArtist onNavigate={onNavigateArtist} artist={item.job.metadata.artist} trackId={item.job.metadata.deezerId} durationMs={track?.durationMs ?? item.job.metadata.durationMs} />{expandedError === key && (label || failureReason) && <Text accessibilityRole="alert" style={styles.inlineError}>{failureReason ? `${label ?? 'Download failed'} · ${failureReason}` : label}</Text>}</View></View>
+            {(label || failureReason) && <IconButton icon="alert-circle-outline" label={`${expandedError === key ? 'Hide' : 'Show'} download error for ${item.job.metadata.title}`} active selected={expandedError === key} onPress={() => setExpandedError((current) => current === key ? null : key)} />}
+            {(!available || canRetry) && (status ? <View accessibilityLabel={`${item.job.metadata.title}: ${status.description}`} style={styles.downloadStatus}>{status.compact === null ? <ActivityIndicator size="small" color={theme.colors.accent} /> : <Text style={styles.downloadStatusText}>{status.compact}</Text>}</View> : canRetry && <IconButton icon="refresh-outline" label={`Retry download for ${item.job.metadata.title}`} active disabled={!ready || busy !== null} onPress={() => { void retryDownload(); }} />)}
+            <IconButton icon="ellipsis-vertical" label={`Options for ${item.job.metadata.title}`} onPress={() => (onOptions ?? setSong)({ track, catalog: item.job.metadata, serviceUrl: item.serviceUrl })} />
           </View>
-          {label && <Text style={[styles.status, failed && styles.error]}>{label}</Text>}
-          {failed && <Text style={styles.muted}>{item.transferError || item.job.error || 'Please try again.'}</Text>}
-          {failed && <Pressable accessibilityRole="button" disabled={busy !== null} onPress={async () => {
-            setBusy(item.job.id); setRetryError(null);
-            try { await retry(item); } catch { setRetryError('Could not retry this download. Please try again.'); }
-            finally { setBusy(null); }
-          }} style={styles.retry}><Text style={styles.retryLabel}>{busy === item.job.id ? 'Retrying…' : 'Retry download'}</Text></Pressable>}
         </View>;
       }} />
-    {playlistTrack && <SongActions key={playlistTrack.id} track={playlistTrack} initialMode="playlists" onClose={() => setPlaylistTrack(undefined)} />}
+    {song && <SongActions track={song.track} catalog={song.catalog} onDownload={(play) => downloads.queue(song.serviceUrl, song.catalog, play)} onClose={() => setSong(undefined)} />}
   </>;
 }
 
 const createStyles = (theme: Theme) => ({
+  fullWidth: { marginHorizontal: -theme.layout.contentInset },
   page: { flex: 1 },
   drawer: { maxHeight: theme.size.panelHeight / 2, flexGrow: 0, flexShrink: 1 },
-  list: { paddingTop: theme.space.md, gap: theme.space.md },
-  card: { paddingVertical: theme.space.sm, gap: theme.space.sm },
-  row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: theme.space.sm },
-  trackText: { flex: 1, minWidth: 0, gap: theme.space.xs },
+  list: { paddingTop: theme.space.md, paddingHorizontal: theme.layout.contentInset, gap: theme.space.md },
+  card: { marginHorizontal: -theme.layout.contentInset, paddingHorizontal: theme.layout.contentInset, paddingVertical: theme.space.sm, gap: theme.space.sm },
+  row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: theme.space.xs },
+  playArea: { position: 'absolute' as const, inset: 0 },
+  details: { flex: 1, minWidth: 0, flexDirection: 'row' as const, alignItems: 'center' as const, gap: theme.space.md },
+  trackText: { flex: 1, minWidth: 0 },
   title: { ...theme.type.body, color: theme.colors.text },
-  muted: { ...theme.type.caption, color: theme.colors.muted },
-  status: { ...theme.type.action, color: theme.colors.accent },
+  activeTitle: { color: theme.colors.accent },
+  downloadStatus: { minWidth: theme.size.trackControl, minHeight: theme.size.trackControl, justifyContent: 'center' as const, alignItems: 'center' as const },
+  downloadStatusText: { ...theme.type.time, color: theme.colors.accent },
   error: { ...theme.type.body, color: theme.colors.error },
+  inlineError: { ...theme.type.caption, color: theme.colors.error },
   empty: { ...theme.type.body, color: theme.colors.muted, textAlign: 'center' as const, paddingVertical: theme.space.section },
-  retry: { alignSelf: 'flex-start' as const, paddingVertical: theme.space.sm, paddingHorizontal: theme.space.md, borderRadius: theme.radius.pill, backgroundColor: theme.colors.surface, boxShadow: theme.shadows.raised },
-  retryLabel: { ...theme.type.action, color: theme.colors.accent },
 });

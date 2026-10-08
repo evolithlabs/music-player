@@ -3,14 +3,14 @@ import { useIsFocused } from 'expo-router/react-navigation';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
 
-import { PageHeader } from '../components/PageHeader';
-import { MattePanel } from '../components/Matte';
-import { Screen } from '../components/Screen';
-import { useScreenBottomInset } from '../hooks/useScreenBottomInset';
-import { usePlayback } from '../state/PlaybackProvider';
-import { useTheme, useThemeStyles } from '../state/ThemeProvider';
-import { Theme } from '../theme';
-import { formatTime } from '../utils/playback';
+import { PageHeader } from '../../components/PageHeader';
+import { MattePanel } from '../../components/Matte';
+import { Screen } from '../../components/Screen';
+import { useScreenBottomInset } from '../../hooks/useScreenBottomInset';
+import { usePlayback } from '../../state/PlaybackProvider';
+import { useTheme, useThemeStyles } from '../../state/ThemeProvider';
+import { Theme } from '../../theme';
+import { formatTime } from '../../utils/playback';
 
 const options = [{ label: 'Off', value: null }, ...[10, 20, 30, 60, 120, 180].map((value) => ({ label: value < 60 ? `In ${value} minutes` : `In ${value / 60} ${value === 60 ? 'hour' : 'hours'}`, value })), { label: 'When current track ends', value: 'end' as const }];
 export default function SleepTimerScreen() {

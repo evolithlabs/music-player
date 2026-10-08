@@ -8,7 +8,7 @@ async function browserFiles() {
   if (!files) {
     const db = await getDatabase();
     if (!db.getFile || !db.saveFile) throw new Error('Browser music storage is unavailable. Please reload the app.');
-    files ??= createBrowserFiles({ getFile: db.getFile, saveFile: db.saveFile });
+    files ??= createBrowserFiles({ getFile: db.getFile, saveFile: db.saveFile, removeFile: db.removeFile });
   }
   return files;
 }
@@ -30,16 +30,23 @@ export async function saveLibrary(tracks: Track[]) {
   }))));
 }
 
+export async function removeSong(track: Track) {
+  const files = await browserFiles();
+  await files.remove(track.uri);
+  if (track.artworkUri) await files.remove(track.artworkUri);
+  await writeLocal((db) => db.removeSong(track.id));
+}
+
 export async function reconcileLibrary(): Promise<Track[]> {
   const tracks = await loadLibrary();
   await saveLibrary(tracks);
   return tracks;
 }
 
-export async function receiveDownload(base: string, job: DownloadJob): Promise<Track> {
+export async function receiveDownload(base: string, job: DownloadJob, onProgress?: (percent: number | null) => void): Promise<Track> {
   if (!/^[a-z0-9]{15}$/.test(job.id) || job.status !== 'completed') throw new Error('Invalid completed download job');
   const files = await browserFiles();
-  const uri = await files.download(`service-${job.id}.mp3`, `${base}/api/downloads/${encodeURIComponent(job.id)}/file`, true);
+  const uri = await files.download(`service-${job.id}.mp3`, `${base}/api/downloads/${encodeURIComponent(job.id)}/file`, true, onProgress);
   let artworkUri: string | undefined;
   if (job.metadata.coverUrl) {
     try { artworkUri = await files.download(`service-${job.id}.cover.jpg`, job.metadata.coverUrl); }

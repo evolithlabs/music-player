@@ -3,8 +3,11 @@ import { createContext, PropsWithChildren, useCallback, useContext, useEffect, u
 import { AppState } from 'react-native';
 import { SharedValue, useSharedValue } from 'react-native-reanimated';
 
-import { Track } from '../types/music';
-import { nextTrack, RepeatMode } from '../utils/playback';
+import { CatalogTrack, DownloadJob, Track } from '../types/music';
+import { prepareStream } from '../services/stream';
+import { getDownloadJob, queueTrack } from '../services/music-service';
+import { matchesCatalog } from '../utils/catalog';
+import { nextTrack, RepeatMode, upcomingTracks } from '../utils/playback';
 import { SleepTimer, sleepTimerExpired } from '../utils/sleep';
 import { useListeningHistory } from '../hooks/useListeningHistory';
 import { useLibrary } from './LibraryProvider';
@@ -13,6 +16,8 @@ import { useTheme } from './ThemeProvider';
 import { usePlaybackSession } from '../hooks/usePlaybackSession';
 import { restorePlaybackSession } from '../utils/playback-session';
 import { useQuickPicks } from '../hooks/useQuickPicks';
+import { usePlaylistHistory } from '../hooks/usePlaylistHistory';
+import { usePlaylists } from './PlaylistProvider';
 
 type PlaybackState = {
   track?: Track; playing: boolean; loaded: boolean; buffering: boolean;
@@ -22,8 +27,13 @@ type PlaybackState = {
   previous: () => void; next: () => void; toggleShuffle: () => void; cycleRepeat: () => void;
   sleepTimer: SleepTimer; setSleepTimer: (minutes: number | 'end' | null) => void;
   recentlyPlayed: string[];
+  recentlyPlayedPlaylists: string[]; playlistHistoryReady: boolean; currentPlaylistId?: string;
   quickPicks: string[]; recordSelection: (id: string) => void;
-  playCollection: (tracks: Track[], startingId?: string, shuffled?: boolean) => void;
+  playCollection: (tracks: Track[], startingId?: string, shuffled?: boolean, playlistId?: string) => void;
+  upcoming: Track[]; playQueuedTrack: (track: Track) => void;
+  playCatalog: (base: string, catalog: CatalogTrack) => Promise<void>;
+  preparing?: { catalog: CatalogTrack; serviceUrl: string; job?: DownloadJob };
+  playError?: { catalog?: CatalogTrack; serviceUrl?: string; trackId?: string; message: string };
 };
 
 const PlaybackContext = createContext<PlaybackState | null>(null);
@@ -31,6 +41,7 @@ const WaveformContext = createContext<SharedValue<number[]> | null>(null);
 
 export function PlaybackProvider({ children }: PropsWithChildren) {
   const { tracks, ready: libraryReady } = useLibrary();
+  const { playlists } = usePlaylists();
   const session = usePlaybackSession();
   const { ids: quickPicks, record: recordSelection, error: picksError } = useQuickPicks();
   const { saved: savedSession, ready: sessionReady, remember: rememberSession } = session;
@@ -39,14 +50,19 @@ export function PlaybackProvider({ children }: PropsWithChildren) {
   const pendingRestore = useRef<{ trackId: string; position: number } | null>(null);
   const [restoring, setRestoring] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [remoteTrack, setRemoteTrack] = useState<Track>();
+  const [preparing, setPreparing] = useState<PlaybackState['preparing']>();
+  const streamRequest = useRef<AbortController | null>(null);
   const [request, setRequest] = useState(0);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState<RepeatMode>('off');
   const [error, setError] = useState<string | null>(null);
+  const [catalogError, setCatalogError] = useState<{ catalog: CatalogTrack; serviceUrl: string; message: string }>();
   const [sleepTimer, setSleep] = useState<SleepTimer>({ mode: 'off' });
   const [queueIds, setQueueIds] = useState<string[] | null>(null);
+  const [playlistId, setPlaylistId] = useState<string>();
   const [history, setHistory] = useState<string[]>([]);
-  const track = tracks.find((item) => item.id === selectedId);
+  const track = remoteTrack?.id === selectedId ? remoteTrack : tracks.find((item) => item.id === selectedId);
   const trackId = track?.id;
   const queueTracks = useMemo(() => (queueIds ? queueIds.map((id) => tracks.find((item) => item.id === id)).filter((item): item is Track => !!item) : tracks).filter((item) => item.fileState !== 'missing'), [queueIds, tracks]);
   const player = useAudioPlayer(track ? { uri: track.uri } : null, { updateInterval: 250 });
@@ -57,9 +73,17 @@ export function PlaybackProvider({ children }: PropsWithChildren) {
   const lastRequest = useRef('');
   const handledFinish = useRef(false);
   const previousFile = useRef<{ id: string; missing: boolean } | undefined>(undefined);
-  const duration = Number.isFinite(status.duration) ? Math.max(0, status.duration) : 0;
-  const currentTime = Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
+  const duration = track && Number.isFinite(status.duration) ? Math.max(0, status.duration) : (preparing?.catalog.durationMs ?? catalogError?.catalog.durationMs ?? 0) / 1000;
+  const currentTime = track && Number.isFinite(status.currentTime) ? Math.max(0, status.currentTime) : 0;
   const { recentlyPlayed, error: historyError } = useListeningHistory(track?.id, player.id, status.playing, currentTime, status.didJustFinish);
+  const currentPlaylistId = track && queueIds?.includes(track.id) && playlists.some((item) => item.id === playlistId && item.trackIds.includes(track.id)) ? playlistId : undefined;
+  const { ids: recentlyPlayedPlaylists, ready: playlistHistoryReady, error: playlistHistoryError } = usePlaylistHistory(currentPlaylistId, trackId, player.id, !restoring && status.isLoaded && status.playing);
+
+  useEffect(() => {
+    if (!libraryReady || !selectedId || track) return;
+    player.pause();
+    player.replace(null);
+  }, [libraryReady, selectedId, track, player]);
 
   useEffect(() => {
     if (!libraryReady || !sessionReady || restored.current) return;
@@ -67,13 +91,13 @@ export function PlaybackProvider({ children }: PropsWithChildren) {
     const saved = userStarted.current ? null : restorePlaybackSession(savedSession, tracks);
     if (!saved) { setRestoring(false); return; }
     pendingRestore.current = { trackId: saved.trackId, position: saved.position };
-    setSelectedId(saved.trackId); setQueueIds(saved.queueIds); setHistory(saved.historyIds); setShuffle(saved.shuffle); setRepeat(saved.repeat);
+    setSelectedId(saved.trackId); setQueueIds(saved.queueIds); setPlaylistId(saved.playlistId); setHistory(saved.historyIds); setShuffle(saved.shuffle); setRepeat(saved.repeat);
   }, [libraryReady, sessionReady, savedSession, tracks]);
 
   useEffect(() => {
-    if (!sessionReady || restoring || !track || !status.isLoaded) return;
-    rememberSession({ trackId: track.id, position: currentTime, queueIds, historyIds: history.slice(-50), shuffle, repeat }, status.playing);
-  }, [sessionReady, restoring, track, status.isLoaded, status.playing, currentTime, queueIds, history, shuffle, repeat, rememberSession]);
+    if (!sessionReady || restoring || !track || track.stream || !status.isLoaded) return;
+    rememberSession({ trackId: track.id, position: currentTime, queueIds, historyIds: history.slice(-50), shuffle, repeat, playlistId }, status.playing);
+  }, [sessionReady, restoring, track, status.isLoaded, status.playing, currentTime, queueIds, history, shuffle, repeat, playlistId, rememberSession]);
 
   useEffect(() => {
     const previous = previousFile.current;
@@ -100,15 +124,49 @@ export function PlaybackProvider({ children }: PropsWithChildren) {
   const startTrack = useCallback((selected: Track) => {
     if (selected.fileState === 'missing') { setError('This song’s audio is unavailable. Check device audio access or download it again.'); return; }
     userStarted.current = true; pendingRestore.current = null; setRestoring(false);
+    streamRequest.current?.abort(); streamRequest.current = null; setPreparing(undefined);
+    setCatalogError(undefined);
+    setRemoteTrack(selected.stream ? selected : undefined);
     if (selectedId && selectedId !== selected.id) setHistory((value) => [...value, selectedId]);
     setSelectedId(selected.id); setRequest((value) => value + 1); setError(null);
   }, [selectedId]);
-  const selectTrack = useCallback((selected: Track) => { if (selected.fileState !== 'missing') recordSelection(selected.id); setQueueIds(null); startTrack(selected); }, [startTrack, recordSelection]);
-  const playCollection = useCallback((collection: Track[], startingId?: string, shuffled?: boolean) => {
+  const upcoming = useMemo(() => upcomingTracks(queueTracks, selectedId, shuffle, repeat), [queueTracks, selectedId, shuffle, repeat]);
+  const playQueuedTrack = useCallback((selected: Track) => {
+    if (!queueTracks.some((track) => track.id === selected.id)) return;
+    recordSelection(selected.id); startTrack(selected);
+  }, [queueTracks, recordSelection, startTrack]);
+  const selectTrack = useCallback((selected: Track) => { if (selected.fileState !== 'missing') recordSelection(selected.id); setQueueIds(null); setPlaylistId(undefined); startTrack(selected); }, [startTrack, recordSelection]);
+  const playCatalog = useCallback(async (base: string, catalog: CatalogTrack) => {
+    const local = tracks.find((item) => item.fileState !== 'missing' && matchesCatalog(item, catalog));
+    if (local) { selectTrack(local); return; }
+    streamRequest.current?.abort();
+    const controller = new AbortController(); streamRequest.current = controller;
+    userStarted.current = true; pendingRestore.current = null; setRestoring(false);
+    setSelectedId(null); setRemoteTrack(undefined); setQueueIds([]); setPlaylistId(undefined);
+    setPreparing({ catalog, serviceUrl: base }); setError(null); setCatalogError(undefined);
+    try {
+      player.pause();
+      const remote = await prepareStream({ queueTrack, getDownloadJob }, base, catalog, controller.signal, (job) => setPreparing({ catalog, serviceUrl: base, job }));
+      if (controller.signal.aborted) return;
+      setQueueIds([]); setPlaylistId(undefined);
+      startTrack(remote);
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setCatalogError({ catalog, serviceUrl: base, message: error instanceof Error ? error.message : 'Could not prepare this song.' });
+        throw error;
+      }
+    } finally {
+      if (streamRequest.current === controller) { streamRequest.current = null; setPreparing(undefined); }
+    }
+  }, [tracks, selectTrack, startTrack, player]);
+  useEffect(() => () => streamRequest.current?.abort(), []);
+  const playCollection = useCallback((collection: Track[], startingId?: string, shuffled?: boolean, playlistId?: string) => {
     const available = collection.filter((item) => item.fileState !== 'missing');
     if (!available.length) return;
     userStarted.current = true; pendingRestore.current = null; setRestoring(false);
-    setQueueIds(available.map((item) => item.id)); setHistory([]);
+    streamRequest.current?.abort(); streamRequest.current = null; setPreparing(undefined); setRemoteTrack(undefined);
+    setCatalogError(undefined);
+    setQueueIds(available.map((item) => item.id)); setPlaylistId(playlistId); setHistory([]);
     if (shuffled !== undefined) setShuffle(shuffled);
     const first = available.find((item) => item.id === startingId) ?? available[shuffled ? Math.floor(Math.random() * available.length) : 0];
     if (startingId) recordSelection(first.id);
@@ -189,13 +247,14 @@ export function PlaybackProvider({ children }: PropsWithChildren) {
   const value = useMemo<PlaybackState>(() => ({
     track, playing: !!track && status.playing, loaded: !!track && status.isLoaded, buffering: status.isBuffering,
     currentTime, duration, progress: duration > 0 ? Math.min(1, currentTime / duration) : 0,
-    error: error ?? session.error ?? historyError ?? picksError ?? (track && status.playbackState === 'error' ? 'This audio file could not be loaded.' : null),
+    error: error ?? session.error ?? historyError ?? playlistHistoryError ?? picksError ?? (track && status.playbackState === 'error' ? 'This audio file could not be loaded.' : null),
+    playError: catalogError ?? (track && (error || status.playbackState === 'error') ? { trackId: track.id, message: error ?? 'This audio file could not be loaded.' } : undefined),
     shuffle, repeat, hasPrevious: !!track && (currentTime > 3 || history.length > 0 || queueTracks.findIndex((item) => item.id === selectedId) > 0),
     hasNext: !!track && (queueTracks.findIndex((item) => item.id === selectedId) < queueTracks.length - 1 || repeat === 'all' || (shuffle && queueTracks.length > 1)),
-    selectTrack, playCollection, toggle, seek, previous, next, quickPicks, recordSelection,
-    recentlyPlayed, sleepTimer, setSleepTimer: (minutes) => setSleep(minutes === null ? { mode: 'off' } : minutes === 'end' ? { mode: 'end' } : { mode: 'time', minutes, deadline: Date.now() + minutes * 60000 }),
+    selectTrack, playCollection, toggle, seek, previous, next, quickPicks, recordSelection, upcoming, playQueuedTrack, playCatalog, preparing,
+    recentlyPlayed, recentlyPlayedPlaylists, playlistHistoryReady, currentPlaylistId, sleepTimer, setSleepTimer: (minutes) => setSleep(minutes === null ? { mode: 'off' } : minutes === 'end' ? { mode: 'end' } : { mode: 'time', minutes, deadline: Date.now() + minutes * 60000 }),
     toggleShuffle: () => setShuffle((value) => !value), cycleRepeat: () => setRepeat((value) => value === 'off' ? 'all' : value === 'all' ? 'one' : 'off'),
-  }), [track, status, currentTime, duration, error, session.error, historyError, picksError, shuffle, repeat, history, queueTracks, selectedId, selectTrack, playCollection, toggle, seek, previous, next, sleepTimer, recentlyPlayed, quickPicks, recordSelection]);
+  }), [track, status, currentTime, duration, error, catalogError, session.error, historyError, playlistHistoryError, picksError, shuffle, repeat, history, queueTracks, selectedId, selectTrack, playCollection, toggle, seek, previous, next, sleepTimer, recentlyPlayed, recentlyPlayedPlaylists, playlistHistoryReady, currentPlaylistId, quickPicks, recordSelection, upcoming, playQueuedTrack, playCatalog, preparing]);
 
   return <WaveformContext.Provider value={waveform}><PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider></WaveformContext.Provider>;
 }

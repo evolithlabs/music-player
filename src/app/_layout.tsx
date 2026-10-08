@@ -1,9 +1,9 @@
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 
-import { BottomDock } from '../components/BottomDock';
+import { PlaybackToast } from '../components/PlaybackToast';
 import { BackdropProvider } from '../state/BackdropProvider';
 import { DownloadsProvider } from '../state/DownloadsProvider';
 import { LibraryProvider } from '../state/LibraryProvider';
@@ -11,7 +11,9 @@ import { PlaybackProvider } from '../state/PlaybackProvider';
 import { PlaylistProvider } from '../state/PlaylistProvider';
 import { ThemeProvider, useTheme } from '../state/ThemeProvider';
 
-function ThemedTabs() {
+export const unstable_settings = { anchor: '(tabs)' };
+
+function RootNavigator() {
   const { theme } = useTheme();
   const navigationTheme = useMemo(() => {
     const base = theme.dark ? DarkTheme : DefaultTheme;
@@ -19,22 +21,13 @@ function ThemedTabs() {
   }, [theme]);
   return <NavigationThemeProvider value={navigationTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
-    <BackdropProvider><Tabs backBehavior="history" tabBar={(props) => <BottomDock {...props} />} screenOptions={{ headerShown: false, tabBarStyle: { position: 'absolute' }, sceneStyle: { backgroundColor: theme.colors.background } }}>
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="search" options={{ title: 'Search' }} />
-      <Tabs.Screen name="library" options={{ title: 'Library' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
-      <Tabs.Screen name="downloads" options={{ title: 'Downloads', href: null }} />
-      <Tabs.Screen name="now-playing" options={{ title: 'Now Playing', href: null }} />
-      <Tabs.Screen name="appearance" options={{ title: 'Appearance', href: null }} />
-      <Tabs.Screen name="equalizer" options={{ title: 'Equalizer', href: null }} />
-      <Tabs.Screen name="sleep-timer" options={{ title: 'Sleep timer', href: null }} />
-      <Tabs.Screen name="about" options={{ title: 'About', href: null }} />
-      <Tabs.Screen name="collection" options={{ title: 'Collection', href: null }} />
-    </Tabs></BackdropProvider>
+    <BackdropProvider><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="now-playing" options={{ presentation: 'transparentModal', animation: 'none', gestureEnabled: false, contentStyle: { backgroundColor: 'transparent' } }} />
+    </Stack><PlaybackToast /></BackdropProvider>
   </NavigationThemeProvider>;
 }
 
 export default function RootLayout() {
-  return <ThemeProvider><LibraryProvider><PlaylistProvider><PlaybackProvider><DownloadsProvider><ThemedTabs /></DownloadsProvider></PlaybackProvider></PlaylistProvider></LibraryProvider></ThemeProvider>;
+  return <ThemeProvider><LibraryProvider><PlaylistProvider><PlaybackProvider><DownloadsProvider><RootNavigator /></DownloadsProvider></PlaybackProvider></PlaylistProvider></LibraryProvider></ThemeProvider>;
 }

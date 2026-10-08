@@ -4,7 +4,7 @@ import { Playlist } from '../types/collection';
 import { getDatabase, writeLocal } from '../database';
 
 const likedSongs: Playlist = { id: 'liked', name: 'Liked Songs', trackIds: [], createdAt: 0 };
-type State = { playlists: Playlist[]; ready: boolean; error: string | null; create: (name: string, trackIds?: string[]) => Promise<Playlist>; add: (id: string, trackIds: string[]) => Promise<void>; rename: (id: string, name: string) => Promise<void>; remove: (id: string) => Promise<void> };
+type State = { playlists: Playlist[]; ready: boolean; error: string | null; create: (name: string, trackIds?: string[]) => Promise<Playlist>; add: (id: string, trackIds: string[]) => Promise<void>; rename: (id: string, name: string) => Promise<void>; remove: (id: string) => Promise<void>; removeSong: (id: string) => Promise<void> };
 const Context = createContext<State | null>(null);
 
 export function PlaylistProvider({ children }: PropsWithChildren) {
@@ -77,7 +77,8 @@ export function PlaylistProvider({ children }: PropsWithChildren) {
     pending.current = operation.catch(() => {});
     return operation;
   }, [ready]);
-  return <Context.Provider value={{ playlists, ready, error, create, add, rename, remove }}>{children}</Context.Provider>;
+  const removeSong = useCallback((songId: string) => write((items) => items.map((item) => ({ ...item, trackIds: item.trackIds.filter((id) => id !== songId) }))), [write]);
+  return <Context.Provider value={{ playlists, ready, error, create, add, rename, remove, removeSong }}>{children}</Context.Provider>;
 }
 
 export function usePlaylists() {

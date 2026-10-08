@@ -1,10 +1,10 @@
 import { Text } from 'react-native';
 
-import { DownloadsList } from '../components/DownloadsList';
-import { Screen } from '../components/Screen';
-import { useScreenBottomInset } from '../hooks/useScreenBottomInset';
-import { useThemeStyles } from '../state/ThemeProvider';
-import { Theme } from '../theme';
+import { DownloadsList } from '../../components/DownloadsList';
+import { Screen } from '../../components/Screen';
+import { useScreenBottomInset } from '../../hooks/useScreenBottomInset';
+import { useThemeStyles } from '../../state/ThemeProvider';
+import { Theme } from '../../theme';
 
 export default function DownloadsScreen() {
   const styles = useThemeStyles(createStyles);

@@ -21,10 +21,13 @@ export type Track = {
   origin: 'local' | 'service';
   uri: string;
   deviceAssetId?: string;
+  stream?: { serviceUrl: string; metadata: CatalogTrack };
 };
 
 export type CatalogTrack = {
   deezerId?: number;
+  deezerArtistId?: number;
+  deezerAlbumId?: number;
   previewUrl?: string;
   catalogUrl?: string;
   source?: 'deezer' | 'musicbrainz';
@@ -39,10 +42,16 @@ export type CatalogTrack = {
   disambiguation?: string;
 };
 
+export type CatalogArtist = { id: number; name: string; pictureUrl?: string };
+export type CatalogAlbum = { id: number; title: string; artist: string; artistId: number; coverUrl?: string; trackCount: number; releaseDate?: string };
+export type CatalogPage<T> = { count: number; nextOffset: number | null } & T;
+
 export type DownloadJob = {
   id: string;
   requestedReleaseId: string;
-  status: 'queued' | 'resolving' | 'downloading' | 'completed' | 'failed';
+  status: 'queued' | 'resolving' | 'downloading' | 'completed' | 'failed' | 'expired';
   error?: string;
+  progress?: number;
+  stage?: 'starting' | 'downloading' | 'processing';
   metadata: CatalogTrack;
 };

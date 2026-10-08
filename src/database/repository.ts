@@ -12,6 +12,8 @@ export function createRepository(db: ExpoSQLiteDatabase<typeof schema>): LocalDa
       const row = { id: song.id, title: song.title, artist: song.artist, album: song.album, uri: song.uri, addedAt: song.addedAt ?? Date.now(), fileState: song.fileState ?? 'available', payload: song };
       tx.insert(schema.songs).values(row).onConflictDoUpdate({ target: schema.songs.id, set: row }).run();
     } }); },
+    async removeSong(id) { db.transaction((tx) => { tx.delete(schema.playlistSongs).where(eq(schema.playlistSongs.songId, id)).run(); tx.delete(schema.songs).where(eq(schema.songs.id, id)).run(); }); },
+    async removeDownloads(jobId) { db.transaction((tx) => { for (const row of tx.select().from(schema.downloads).all()) { if (JSON.parse(row.payload).job.id === jobId) tx.delete(schema.downloads).where(eq(schema.downloads.id, row.id)).run(); } }); },
     async getPlaylists() {
       const links = db.select().from(schema.playlistSongs).orderBy(schema.playlistSongs.position).all();
       return db.select().from(schema.playlists).orderBy(schema.playlists.createdAt).all().map((row) => ({ ...row, trackIds: links.filter((link) => link.playlistId === row.id).map((link) => link.songId) }));

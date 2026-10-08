@@ -2,7 +2,8 @@ import { setAudioModeAsync } from 'expo-audio';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { reconcileLibrary, saveLibrary } from '../services/library';
+import { reconcileLibrary, removeSong, saveLibrary } from '../services/library';
+import { getDatabase, writeLocal } from '../database';
 import { scanDeviceAudio, watchDeviceAudio } from '../services/device-audio';
 import { Track } from '../types/music';
 import { mergeDeviceLibrary } from '../utils/device-library';
@@ -12,6 +13,7 @@ type LibraryState = {
   ready: boolean;
   error: string | null;
   addTracks: (added: Track[]) => Promise<void>;
+  remove: (id: string) => Promise<void>;
 };
 
 const LibraryContext = createContext<LibraryState | null>(null);
@@ -58,6 +60,22 @@ export function LibraryProvider({ children }: PropsWithChildren) {
     return operation;
   }, []);
 
+  const remove = useCallback((id: string) => {
+    const operation = pending.current.then(async () => {
+      const track = current.current.find((item) => item.id === id);
+      if (!track) return;
+      if (track.deviceAssetId) {
+        const removed = JSON.parse(await (await getDatabase()).getSetting('groovio.removed-device-songs') ?? '[]') as string[];
+        await writeLocal((db) => db.setSetting('groovio.removed-device-songs', JSON.stringify([...new Set([...removed, id])])));
+      }
+      await removeSong(track);
+      current.current = current.current.filter((item) => item.id !== id);
+      setTracks(current.current);
+    });
+    pending.current = operation.catch(() => {});
+    return operation;
+  }, []);
+
   useEffect(() => {
     if (!ready) return;
     let active = true;
@@ -70,7 +88,8 @@ export function LibraryProvider({ children }: PropsWithChildren) {
         const discovered = await scanDeviceAudio(requestAccess);
         if (!active || !discovered) return;
         const operation = pending.current.then(async () => {
-          const library = mergeDeviceLibrary(current.current, discovered);
+          const removed = new Set<string>(JSON.parse(await (await getDatabase()).getSetting('groovio.removed-device-songs') ?? '[]'));
+          const library = mergeDeviceLibrary(current.current, discovered.filter((track) => !removed.has(track.id)));
           if (JSON.stringify(library) === JSON.stringify(current.current)) return;
           await saveLibrary(library);
           if (active) { current.current = library; setTracks(library); }
@@ -86,7 +105,7 @@ export function LibraryProvider({ children }: PropsWithChildren) {
     return () => { active = false; stopWatching(); subscription.remove(); };
   }, [ready]);
 
-  return <LibraryContext.Provider value={{ tracks, ready, error, addTracks }}>{children}</LibraryContext.Provider>;
+  return <LibraryContext.Provider value={{ tracks, ready, error, addTracks, remove }}>{children}</LibraryContext.Provider>;
 }
 
 export function useLibrary() {

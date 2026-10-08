@@ -3,29 +3,37 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, Share, Text, View } from 'react-native';
 
-import { Artwork } from '../components/Artwork';
-import { BottomSheet } from '../components/BottomSheet';
-import { IconButton, RoundButton } from '../components/Matte';
-import { PageHeader } from '../components/PageHeader';
-import { PlaylistEditor } from '../components/PlaylistEditor';
-import { Screen } from '../components/Screen';
-import { SongActions } from '../components/SongActions';
-import { SongRow } from '../components/SongRow';
-import { useScreenBottomInset } from '../hooks/useScreenBottomInset';
-import { loadServiceUrl, searchTracks } from '../services/music-service';
-import { useDownloads } from '../state/DownloadsProvider';
-import { useLibrary } from '../state/LibraryProvider';
-import { usePlayback } from '../state/PlaybackProvider';
-import { usePlaylists } from '../state/PlaylistProvider';
-import { useTheme, useThemeStyles } from '../state/ThemeProvider';
-import { Theme } from '../theme';
-import { CatalogTrack, Track } from '../types/music';
-import { catalogIdentity, matchesCatalog } from '../utils/catalog';
-import { formatTime } from '../utils/playback';
-import { PlaylistArtwork } from '../components/PlaylistArtwork';
-import { PlaylistSettings } from '../components/PlaylistSettings';
+import { Artwork } from '../../components/Artwork';
+import { BottomSheet } from '../../components/BottomSheet';
+import { RoundButton } from '../../components/Matte';
+import { PageHeader } from '../../components/PageHeader';
+import { PlaylistEditor } from '../../components/PlaylistEditor';
+import { Screen } from '../../components/Screen';
+import { SongActions } from '../../components/SongActions';
+import { SongRow } from '../../components/SongRow';
+import { useScreenBottomInset } from '../../hooks/useScreenBottomInset';
+import { loadServiceUrl, searchTracks } from '../../services/music-service';
+import { useDownloads } from '../../state/DownloadsProvider';
+import { useLibrary } from '../../state/LibraryProvider';
+import { usePlayback } from '../../state/PlaybackProvider';
+import { usePlaylists } from '../../state/PlaylistProvider';
+import { useTheme, useThemeStyles } from '../../state/ThemeProvider';
+import { Theme } from '../../theme';
+import { CatalogTrack, Track } from '../../types/music';
+import { catalogIdentity, matchesCatalog } from '../../utils/catalog';
+import { formatTime } from '../../utils/playback';
+import { PlaylistArtwork } from '../../components/PlaylistArtwork';
+import { PlaylistSettings } from '../../components/PlaylistSettings';
+import { CatalogCollection } from '../../components/CatalogCollection';
+import { CatalogSongRow } from '../../components/CatalogSongRow';
 
 export default function CollectionScreen() {
+  const params = useLocalSearchParams<{ kind?: string; id?: string; name?: string; artist?: string; catalog?: string; trackId?: string }>();
+  if (params.kind === 'artist' || params.kind === 'album') return <CatalogCollection key={JSON.stringify(params)} kind={params.kind} name={params.name ?? ''} artistName={params.artist} id={params.id} trackId={params.trackId} />;
+  return <SavedCollectionScreen />;
+}
+
+function SavedCollectionScreen() {
   const params = useLocalSearchParams<{ kind?: string; id?: string; name?: string; artist?: string; catalog?: string }>();
   const { tracks } = useLibrary();
   const playlists = usePlaylists();
@@ -35,7 +43,7 @@ export default function CollectionScreen() {
   const styles = useThemeStyles(createStyles);
   const bottomInset = useScreenBottomInset();
   const playlist = playlists.playlists.find((item) => item.id === params.id);
-  const title = params.kind === 'playlist' ? playlist?.name ?? 'Playlist' : params.kind === 'recent' ? 'Recently Played' : params.kind === 'added' ? 'Recently Added' : params.name ?? 'Collection';
+  const title = params.kind === 'playlist' ? playlist?.name ?? 'Playlist' : params.kind === 'recent' ? 'Last listened to' : params.kind === 'added' ? 'Recently Added' : params.name ?? 'Collection';
   const key = JSON.stringify([params.kind, params.name, params.artist, params.catalog]);
   const [response, setResponse] = useState<{ key: string; results: CatalogTrack[]; service: string; failed?: string }>();
   const [editor, setEditor] = useState(false);
@@ -65,18 +73,18 @@ export default function CollectionScreen() {
     await downloads.queue(response.service, catalog, play);
   }
   function play(shuffled = false) {
-    if (localTracks.length) { playback.playCollection(localTracks, undefined, shuffled); router.push('/now-playing'); }
+    if (localTracks.length) { playback.playCollection(localTracks, undefined, shuffled, params.kind === 'playlist' ? playlist?.id : undefined); router.push('/now-playing'); }
     else if (catalogTracks.length) { setBusy(true); void download(catalogTracks[0], true).catch((error) => setError(error instanceof Error ? error.message : 'Could not queue this song.')).finally(() => setBusy(false)); }
   }
   return <Screen>
-    <FlatList data={items} keyExtractor={(item) => item.id} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomInset }}
+    <FlatList style={{ marginHorizontal: -theme.layout.contentInset }} data={items} keyExtractor={(item) => item.id} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomInset, paddingHorizontal: theme.layout.contentInset }}
       ListHeaderComponent={<><View style={styles.header}><View style={styles.back}><PageHeader title="" backTo="/library" /></View>{params.kind !== 'playlist' && <RoundButton icon="ellipsis-vertical" label="Collection options" onPress={() => setOptions(true)} />}</View>
         <View style={styles.hero}>{playlist ? <PlaylistArtwork playlist={playlist} size={theme.size.albumArtwork + theme.space.xl} /> : <Artwork uri={artwork} square size={theme.size.albumArtwork + theme.space.xl} />}<Text style={styles.heading}>{title}</Text><Text style={styles.caption}>{items.length} {items.length === 1 ? 'song' : 'songs'}{duration > 0 ? ` · ${formatTime(duration)}` : ''}</Text></View>
-        <View style={styles.controls}>{playlist && <RoundButton icon="add" label="Add songs to playlist" disabled={!playlists.ready} onPress={() => setEditor(true)} />}{playlist && <RoundButton icon="shuffle" label={`Shuffle ${title}`} disabled={!localTracks.length || busy} onPress={() => play(true)} />}{params.catalog === '1' && <RoundButton icon="cloud-download-outline" label="Download collection songs" disabled={!catalogTracks.length || busy || !downloads.ready} onPress={() => { setBusy(true); setError(null); void (async () => { for (const song of catalogTracks) await download(song); })().catch((error) => setError(error instanceof Error ? error.message : 'Could not queue this collection.')).finally(() => setBusy(false)); }} />}<RoundButton icon="play" label={`Play ${title}`} filled active disabled={!items.length || busy} onPress={() => play()} />{playlist && <RoundButton icon="settings-outline" label="Playlist settings" onPress={() => setOptions(true)} />}</View>
+        <View style={styles.controls}>{playlist && <RoundButton icon="add" label="Add songs to playlist" disabled={!playlists.ready} onPress={() => setEditor(true)} />}{playlist && <RoundButton icon="shuffle" label={`Shuffle ${title}`} disabled={!localTracks.length || busy} onPress={() => play(true)} />}{params.catalog === '1' && <RoundButton family="feather" icon="download" label="Download collection songs" disabled={!catalogTracks.length || busy || !downloads.ready} onPress={() => { setBusy(true); setError(null); void (async () => { for (const song of catalogTracks) await download(song); })().catch((error) => setError(error instanceof Error ? error.message : 'Could not queue this collection.')).finally(() => setBusy(false)); }} />}<RoundButton icon="play" label={`Play ${title}`} filled active disabled={!items.length || busy} onPress={() => play()} />{playlist && <RoundButton icon="settings-outline" label="Playlist settings" onPress={() => setOptions(true)} />}</View>
         {(error || response?.key === key && response.failed) && <Text accessibilityRole="alert" style={styles.error}>{error ?? response?.failed}</Text>}
       </>}
       ListEmptyComponent={<Text style={styles.empty}>{params.catalog === '1' && response?.key !== key ? 'Loading songs…' : params.kind === 'playlist' ? 'Add songs to make this playlist yours.' : 'No songs in this collection yet.'}</Text>}
-      renderItem={({ item }) => item.track ? <SongRow track={item.track} collection={localTracks} onOptions={() => setSong({ track: item.track })} /> : <View style={styles.row}><Artwork uri={item.catalog?.coverUrl} square /><View style={styles.details}><Text numberOfLines={1} style={styles.title}>{item.catalog?.title}</Text><Text numberOfLines={1} style={styles.caption}>{item.catalog?.artist}</Text></View><RoundButton icon="play" label={`Play ${item.catalog?.title}`} size="track" disabled={busy} onPress={() => { if (item.catalog) void download(item.catalog, true).catch((error) => setError(error instanceof Error ? error.message : 'Could not queue this song.')); }} /><IconButton icon="ellipsis-vertical" label={`Options for ${item.catalog?.title}`} onPress={() => setSong({ catalog: item.catalog })} /></View>} />
+      renderItem={({ item }) => item.track ? <SongRow track={item.track} collection={localTracks} playlistId={params.kind === 'playlist' ? playlist?.id : undefined} onOptions={() => setSong({ track: item.track })} /> : item.catalog ? <CatalogSongRow catalog={item.catalog} serviceUrl={response?.service ?? ''} onOptions={() => setSong({ catalog: item.catalog })} /> : null} />
     <SongActions track={song?.track} catalog={song?.catalog} onClose={() => setSong(undefined)} onDownload={song?.catalog ? (play) => download(song.catalog!, play) : undefined} />
     {editor && playlist && <PlaylistEditor playlistId={playlist.id} onClose={() => setEditor(false)} />}
     <PlaylistSettings playlistId={options && playlist ? playlist.id : undefined} onClose={() => setOptions(false)} onRemoved={() => router.replace('/library')} />

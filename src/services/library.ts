@@ -1,8 +1,10 @@
 import { Directory, File, Paths } from 'expo-file-system';
+import { createDownloadResumable } from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
 import { getDatabase, writeLocal } from '../database';
 import { DownloadJob, Track } from '../types/music';
+import { downloadPercent } from '../utils/downloads';
 
 const absoluteUri = (uri: string) => /^[a-z][a-z0-9+.-]*:/i.test(uri);
 const resolveFile = (uri: string) => Platform.OS === 'web' || absoluteUri(uri) ? uri : new File(Paths.document, 'music', uri).uri;
@@ -22,6 +24,17 @@ export async function saveLibrary(tracks: Track[]) {
   const filename = (uri: string) => uri.startsWith(`${musicDirectory.replace(/\/$/, '')}/`) ? new File(uri).name : uri;
   const stored = tracks.map((track) => ({ ...track, uri: filename(track.uri), artworkUri: track.artworkUri ? filename(track.artworkUri) : undefined }));
   await writeLocal((db) => db.saveSongs(stored));
+}
+
+export async function removeSong(track: Track) {
+  const musicDirectory = `${new Directory(Paths.document, 'music').uri.replace(/\/$/, '')}/`;
+  // Only app-owned downloads are deleted; device music belongs to the user.
+  for (const uri of [track.uri, track.artworkUri]) {
+    if (!uri?.startsWith(musicDirectory)) continue;
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  }
+  await writeLocal((db) => db.removeSong(track.id));
 }
 
 export async function reconcileLibrary(): Promise<Track[]> {
@@ -50,7 +63,7 @@ export async function reconcileLibrary(): Promise<Track[]> {
   return reconciled;
 }
 
-export async function receiveDownload(base: string, job: DownloadJob): Promise<Track> {
+export async function receiveDownload(base: string, job: DownloadJob, onProgress?: (percent: number | null) => void): Promise<Track> {
   if (!/^[a-z0-9]{15}$/.test(job.id) || job.status !== 'completed') throw new Error('Invalid completed download job');
   const directory = new Directory(Paths.document, 'music');
   directory.create({ intermediates: true, idempotent: true });
@@ -58,7 +71,9 @@ export async function receiveDownload(base: string, job: DownloadJob): Promise<T
   const partial = new File(directory, `service-${job.id}.part`);
   if (!file.exists || file.size === 0) {
     try {
-      await File.downloadFileAsync(`${base}/api/downloads/${encodeURIComponent(job.id)}/file`, partial, { idempotent: true });
+      const task = createDownloadResumable(`${base}/api/downloads/${encodeURIComponent(job.id)}/file`, partial.uri, {}, ({ totalBytesWritten, totalBytesExpectedToWrite }) => onProgress?.(downloadPercent(totalBytesWritten, totalBytesExpectedToWrite)));
+      const result = await task.downloadAsync();
+      if (!result || result.status !== 200) throw new Error(`Could not download audio (HTTP ${result?.status ?? 'unknown'}). Please retry.`);
       if (partial.size === 0) throw new Error('The downloaded audio file is empty');
       if (file.exists) file.delete();
       partial.move(file);

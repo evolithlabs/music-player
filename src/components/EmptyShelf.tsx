@@ -1,17 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { PropsWithChildren } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { useTheme, useThemeStyles } from '../state/ThemeProvider';
 import { Theme } from '../theme';
 
-export function EmptyShelf({ message, playlists = false, loading = false, cardSize }: { message: string; playlists?: boolean; loading?: boolean; cardSize: number }) {
+export function EmptyShelf({ message, playlists = false, loading = false, loadingMessage = 'Opening your library…', cardSize, children }: PropsWithChildren<{ message: string; playlists?: boolean; loading?: boolean; loadingMessage?: string; cardSize: number }>) {
   const { theme } = useTheme();
   const styles = useThemeStyles(createStyles);
   return <View style={[styles.shelf, playlists && styles.playlistShelf]}>
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden pointerEvents="none" style={styles.ghosts}>
-      {[0, 1, 2, 3].map((index) => <View key={index} style={[styles.ghost, { width: cardSize }, playlists && styles.playlist]}>
+      {children ?? [0, 1, 2, 3].map((index) => <View key={index} style={[styles.ghost, { width: cardSize }, playlists && styles.playlist]}>
         <LinearGradient colors={theme.gradients.artwork} start={{ x: index % 2, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.cover, { width: playlists ? theme.size.thumbnail : cardSize, height: playlists ? theme.size.thumbnail : cardSize }]}>
           <View style={[styles.ring, { width: (playlists ? theme.size.thumbnail : cardSize) * 0.68, height: (playlists ? theme.size.thumbnail : cardSize) * 0.68 }]}><View style={styles.innerRing}><View style={styles.discCenter} /></View></View>
         </LinearGradient>
@@ -19,7 +20,7 @@ export function EmptyShelf({ message, playlists = false, loading = false, cardSi
       </View>)}
     </View>
     <LinearGradient pointerEvents="none" colors={theme.gradients.emptyOverlay} style={styles.scrim} />
-    <View style={styles.overlay}><Text style={styles.message}>{loading ? 'Opening your library…' : message}</Text>{!loading && <Pressable accessibilityRole="button" accessibilityLabel={playlists ? 'Open Library to pin a playlist' : 'Find music in Search'} onPress={() => router.push(playlists ? '/library' : '/search')} style={({ pressed }) => [styles.action, pressed && styles.pressed]}><Text style={styles.actionText}>{playlists ? 'Open Library' : 'Find music'}</Text><Ionicons name="arrow-forward" size={theme.size.smallIcon} color={theme.colors.accent} /></Pressable>}</View>
+    <View style={styles.overlay}><Text style={styles.message}>{loading ? loadingMessage : message}</Text>{!loading && <Pressable accessibilityRole="button" accessibilityLabel={playlists ? 'Open Library to pin a playlist' : 'Find music in Search'} onPress={() => router.push(playlists ? '/library' : '/search')} style={({ pressed }) => [styles.action, pressed && styles.pressed]}><Text style={styles.actionText}>{playlists ? 'Open Library' : 'Find music'}</Text><Ionicons name="arrow-forward" size={theme.size.smallIcon} color={theme.colors.accent} /></Pressable>}</View>
   </View>;
 }
 const createStyles = (theme: Theme) => ({

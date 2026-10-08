@@ -30,10 +30,22 @@ export async function createDatabase(): Promise<LocalDatabase> {
   return {
     async getFile(key) { return (await get<{ data: Blob }>('files', key))?.data; },
     async saveFile(key, data) { await write(['files'], (tx) => tx.objectStore('files').put({ key, data })); },
+    async removeFile(key) { await write(['files'], (tx) => tx.objectStore('files').delete(key)); },
     async getSetting(key) { return (await get<{ value: string }>('settings', key))?.value ?? null; },
     async setSetting(key, value) { await write(['settings'], (tx) => tx.objectStore('settings').put({ key, value })); },
     async getSongs() { return (await all<Track>('songs')).sort((a, b) => (a.addedAt ?? 0) - (b.addedAt ?? 0)); },
     async saveSongs(songs) { await write(['songs'], (tx) => songs.forEach((song) => tx.objectStore('songs').put({ ...song, addedAt: song.addedAt ?? Date.now(), fileState: song.fileState ?? 'available' }))); },
+    async removeSong(id) {
+      const links = await all<{ id: string; songId: string }>('playlist_songs');
+      await write(['songs', 'playlist_songs'], (tx) => {
+        links.filter((link) => link.songId === id).forEach((link) => tx.objectStore('playlist_songs').delete(link.id));
+        tx.objectStore('songs').delete(id);
+      });
+    },
+    async removeDownloads(jobId) {
+      const entries = await all<StoredDownload & { id: string }>('downloads');
+      await write(['downloads'], (tx) => entries.filter((entry) => entry.job.id === jobId).forEach((entry) => tx.objectStore('downloads').delete(entry.id)));
+    },
     async getPlaylists() {
       const rows = await all<Playlist>('playlists');
       const links = await all<{ playlistId: string; songId: string; position: number }>('playlist_songs');

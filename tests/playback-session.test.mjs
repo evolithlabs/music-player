@@ -25,3 +25,12 @@ test('unavailable songs and invalid sessions never restore unusable playback', (
   assert.deepEqual(restored.queueIds, ['a']);
   assert.equal(restored.repeat, 'off');
 });
+
+test('playlist context survives playback restoration only with its collection queue', () => {
+  const saved = { ...session, playlistId: 'playlist-1' };
+  assert.equal(restorePlaybackSession(parsePlaybackSession(JSON.stringify(saved)), tracks).playlistId, 'playlist-1');
+  for (const queueIds of [null, ['a']]) {
+    assert.equal(parsePlaybackSession(JSON.stringify({ ...saved, queueIds })).playlistId, undefined);
+  }
+  assert.equal(parsePlaybackSession(JSON.stringify({ ...saved, playlistId: 7 })).playlistId, undefined);
+});

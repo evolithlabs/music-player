@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { localPreferences } from '../database';
 
-import { CatalogTrack, DownloadJob } from '../types/music';
+import { CatalogAlbum, CatalogArtist, CatalogPage, CatalogTrack, DownloadJob } from '../types/music';
 
 const serviceKey = 'groovio.service-url';
 export const defaultServiceUrl = process.env.EXPO_PUBLIC_MUSIC_SERVICE_URL ?? (Platform.OS === 'android' ? 'http://10.0.2.2:8090' : 'http://localhost:8090');
@@ -52,14 +52,34 @@ export function searchTracks(base: string, query: string, offset = 0, signal?: A
   return request<{ tracks: CatalogTrack[]; count: number; offset: number }>(base, `/api/search?q=${encodeURIComponent(query)}&offset=${offset}`, {}, signal);
 }
 
-export function queueTrack(base: string, track: CatalogTrack) {
+export function queueTrack(base: string, track: CatalogTrack, signal?: AbortSignal) {
   return request<DownloadJob>(base, '/api/queue-track', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ deezerId: track.deezerId, recordingId: track.recordingId, releaseId: track.releaseId ?? '', title: track.title, artist: track.artist }),
-  });
+  }, signal);
 }
 
 export function getDownloadJob(base: string, id: string, signal?: AbortSignal) {
   return request<DownloadJob>(base, `/api/downloads/${encodeURIComponent(id)}`, {}, signal);
+}
+
+export function getArtist(base: string, name: string, trackId?: number, signal?: AbortSignal) {
+  return request<CatalogArtist>(base, `/api/artist?name=${encodeURIComponent(name)}&trackId=${trackId ?? ''}`, {}, signal);
+}
+
+export function getArtistSongs(base: string, id: number, offset = 0, top = false, signal?: AbortSignal) {
+  return request<CatalogPage<{ tracks: CatalogTrack[] }>>(base, `/api/artists/${id}/tracks?offset=${offset}&top=${top ? '1' : '0'}`, {}, signal);
+}
+
+export function getArtistAlbums(base: string, id: number, offset = 0, signal?: AbortSignal) {
+  return request<CatalogPage<{ albums: CatalogAlbum[] }>>(base, `/api/artists/${id}/albums?offset=${offset}`, {}, signal);
+}
+
+export function getAlbum(base: string, name: string, artist: string, id?: number, trackId?: number, signal?: AbortSignal) {
+  return request<CatalogAlbum>(base, `/api/album?name=${encodeURIComponent(name)}&artist=${encodeURIComponent(artist)}&id=${id ?? ''}&trackId=${trackId ?? ''}`, {}, signal);
+}
+
+export function getAlbumSongs(base: string, id: number, offset = 0, signal?: AbortSignal) {
+  return request<CatalogPage<{ tracks: CatalogTrack[] }>>(base, `/api/albums/${id}/tracks?offset=${offset}`, {}, signal);
 }

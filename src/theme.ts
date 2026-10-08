@@ -9,7 +9,7 @@ export type Theme = {
   dark: boolean;
   colors: {
     background: string; surface: string; recessed: string; border: string;
-    text: string; muted: string; accent: string; onAccent: string;
+    text: string; muted: string; accent: string; onAccent: string; selectedSong: string;
     error: string; progress: string; overlay: string; transparent: string; subtle: string; highlight: string;
   };
   gradients: { canvas: Gradient; panel: Gradient; control: Gradient; accent: Gradient; recessed: Gradient; progress: Gradient; artwork: Gradient; emptyOverlay: Gradient };
@@ -46,16 +46,26 @@ const charcoal: Theme = {
   ...foundation,
   dock: { player: ['#000000', '#000000'], navigationGradient: ['#121617', '#121617'], edge: '#41484A80', navigationShadow: 'none', text: '#F3F2EE', muted: '#A1A8AA', maxWidth: 560, waveformHeight: 34, waveformBars: 96, lyricHeight: 132 },
   id: 'charcoal', name: 'Matte charcoal', description: 'Flat charcoal surfaces. Ember orange accents.', dark: true,
-  colors: { background: '#121617', surface: '#222729', recessed: '#111416', border: '#FFFFFF10', text: '#F0F0EC', muted: '#979F9F', accent: '#FF742E', onAccent: '#FFF8F1', error: '#F0A59B', progress: '#EAB94A', overlay: '#080B0D33', transparent: 'transparent', subtle: '#292F31', highlight: '#FFFFFF0D' },
+  colors: { background: '#121617', surface: '#222729', recessed: '#111416', border: '#FFFFFF10', text: '#F0F0EC', muted: '#979F9F', accent: '#FF742E', onAccent: '#FFF8F1', selectedSong: '#000000', error: '#F0A59B', progress: '#EAB94A', overlay: '#080B0D33', transparent: 'transparent', subtle: '#292F31', highlight: '#FFFFFF0D' },
   gradients: { canvas: ['#121617', '#121617'], panel: ['#222729', '#222729'], control: ['#222729', '#222729'], accent: ['#FF742E', '#FF742E'], recessed: ['#111416', '#111416'], progress: ['#FF742E', '#FF742E'], artwork: ['#222729', '#222729'], emptyOverlay: ['#13171900', '#131719B8', '#131719CC', '#13171900'] },
   shadows: {
     panel: 'none', raised: 'none', inset: 'none', artwork: 'none', accent: 'none',
   },
 };
 
-export const themes: readonly Theme[] = [charcoal];
+const violet: Theme = {
+  ...foundation,
+  id: 'violet-glow', name: 'Violet glow', description: 'Deep plum. Electric violet. Luminous magenta.', dark: true,
+  colors: { background: '#19091F', surface: '#321341', recessed: '#160A24', border: '#E8B7FF24', text: '#FCF2FF', muted: '#C0A6CE', accent: '#F077E9', onAccent: '#210727', selectedSong: '#271034', error: '#FFAAA9', progress: '#CA91FF', overlay: '#10051C66', transparent: 'transparent', subtle: '#422055', highlight: '#F5CEFF14' },
+  gradients: { canvas: ['#24091F', '#2B0D45', '#160A2A'], panel: ['#3B1549', '#28113F'], control: ['#321341', '#321341'], accent: ['#F077E9', '#BC86F5'], recessed: ['#160A24', '#160A24'], progress: ['#F077E9', '#BC86F5'], artwork: ['#8B168F', '#4B1A91'], emptyOverlay: ['#19091F00', '#19091FB8', '#19091FCC', '#19091F00'] },
+  shadows: { panel: 'none', raised: 'none', inset: 'none', artwork: 'none', accent: 'none' },
+  dock: { player: ['#210D2F', '#160A24'], navigationGradient: ['#230D35', '#19091F'], edge: '#E8B7FF30', navigationShadow: 'none', text: '#FCF2FF', muted: '#C0A6CE', maxWidth: 560, waveformHeight: 34, waveformBars: 96, lyricHeight: 132 },
+};
+
+export const themes: readonly Theme[] = [charcoal, violet];
 export const defaultTheme = charcoal;
 
 export function findTheme(id: string | null) {
+  if (id === 'rose-dusk') return violet;
   return themes.find((theme) => theme.id === id) ?? defaultTheme;
 }

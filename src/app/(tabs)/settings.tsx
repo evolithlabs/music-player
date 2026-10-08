@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ScrollView, Text, Pressable, View } from 'react-native';
 
-import { Screen } from '../components/Screen';
-import { useScreenBottomInset } from '../hooks/useScreenBottomInset';
-import { usePlayback } from '../state/PlaybackProvider';
-import { useTheme, useThemeStyles } from '../state/ThemeProvider';
-import { Theme } from '../theme';
+import { Screen } from '../../components/Screen';
+import { useScreenBottomInset } from '../../hooks/useScreenBottomInset';
+import { usePlayback } from '../../state/PlaybackProvider';
+import { useTheme, useThemeStyles } from '../../state/ThemeProvider';
+import { Theme } from '../../theme';
 
 export default function SettingsScreen() {
   const { theme } = useTheme();

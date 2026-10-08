@@ -9,16 +9,17 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from '
 import { usePlayback } from '../state/PlaybackProvider';
 import { useTheme, useThemeStyles } from '../state/ThemeProvider';
 import { Theme } from '../theme';
+import { formatTime } from '../utils/playback';
 import { Artwork } from './Artwork';
 import { RoundButton } from './Matte';
 import { SeekBar } from './SeekBar';
 
 type Props = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 const sections = [
-  { name: 'index', title: 'Home', icon: 'home-outline' },
-  { name: 'search', title: 'Search', icon: 'search-outline' },
-  { name: 'library', title: 'Library', icon: 'book-outline' },
-  { name: 'settings', title: 'Settings', icon: 'settings-outline' },
+  { name: 'index', title: 'Home', icon: 'home-outline', activeIcon: 'home' },
+  { name: 'search', title: 'Search', icon: 'search-outline', activeIcon: 'search' },
+  { name: 'library', title: 'Library', icon: 'book-outline', activeIcon: 'book' },
+  { name: 'settings', title: 'Settings', icon: 'settings-outline', activeIcon: 'settings' },
 ] as const;
 
 export function BottomDock(props: Props) {
@@ -29,6 +30,8 @@ function DockBody({ state, navigation, insets, hidden }: Props & { hidden: boole
   const { theme } = useTheme();
   const styles = useThemeStyles(createStyles);
   const playback = usePlayback();
+  const duration = playback.duration > 0 ? playback.duration : (playback.track?.durationMs ?? 0) / 1000;
+  const timestamp = Number.isFinite(duration) && duration > 0 ? formatTime(duration) : '--:--';
   const reportHeight = useContext(BottomTabBarHeightCallbackContext);
   const visibility = useSharedValue(hidden ? 0 : 1);
   const dockHeight = useSharedValue(0);
@@ -38,7 +41,7 @@ function DockBody({ state, navigation, insets, hidden }: Props & { hidden: boole
   }, [hidden, visibility, dockHeight, reportHeight]);
   const transition = useAnimatedStyle(() => ({ opacity: visibility.value, display: visibility.value > 0 ? 'flex' : 'none', transform: [{ translateY: (1 - visibility.value) * dockHeight.value }] }));
   const currentRoute = state.routes[state.index].name;
-  const activeName = ['downloads', 'collection'].includes(currentRoute) ? 'library' : currentRoute;
+  const activeName = ['downloads', 'collection', 'artist'].includes(currentRoute) ? 'library' : currentRoute;
   return <Animated.View pointerEvents={hidden ? 'none' : 'box-none'} aria-hidden={hidden} accessibilityElementsHidden={hidden} importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'} onLayout={({ nativeEvent }) => { if (nativeEvent.layout.height > 0) dockHeight.set(nativeEvent.layout.height); if (!hidden) reportHeight?.(nativeEvent.layout.height); }} style={[styles.outer, transition]}>
     <View pointerEvents="box-none" style={styles.dock}>
       <View pointerEvents="box-none" style={[styles.playerInset, { paddingLeft: insets.left, paddingRight: insets.right }]}>
@@ -46,13 +49,13 @@ function DockBody({ state, navigation, insets, hidden }: Props & { hidden: boole
         <View style={styles.playerRow}>
           <Pressable accessibilityRole="button" accessibilityLabel="Open now playing" onPress={() => router.push('/now-playing')} style={styles.details}>
             <Artwork uri={playback.track?.artworkUri} size={theme.size.smallControl} square />
-            <View style={styles.metadata}><Text numberOfLines={1} style={styles.title}>{playback.track?.title ?? 'Your next favorite'}</Text><Text numberOfLines={1} style={styles.artist}>{playback.track?.artist ?? 'Choose a song'}</Text></View>
+            <View style={styles.metadata}><Text numberOfLines={1} style={[styles.title, playback.track && styles.activeTitle]}>{playback.track?.title ?? 'Your next favorite'}</Text><View style={styles.artistRow}>{playback.track ? <Text numberOfLines={1} style={[styles.artist, styles.artistName]}>{playback.track.artist}</Text> : <Text style={[styles.artist, styles.artistName]}>Choose a song</Text>}{playback.track && <Text style={[styles.artist, styles.duration]}> • {timestamp}</Text>}</View></View>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Previous track" disabled={!playback.hasPrevious} onPress={playback.previous} style={[styles.skip, !playback.hasPrevious && styles.disabled]}><Ionicons name="play-skip-back" size={theme.size.smallIcon} color={theme.dock.text} /></Pressable>
           <RoundButton icon={playback.playing ? 'pause' : 'play'} label={playback.playing ? 'Pause' : 'Play'} size="track" filled active disabled={!playback.loaded} onPress={playback.toggle} />
           <Pressable accessibilityRole="button" accessibilityLabel="Next track" disabled={!playback.hasNext} onPress={playback.next} style={[styles.skip, !playback.hasNext && styles.disabled]}><Ionicons name="play-skip-forward" size={theme.size.smallIcon} color={theme.dock.text} /></Pressable>
         </View>
-        <SeekBar dock hideTimes divider />
+        <SeekBar dock hideTimes divider waveform />
       </LinearGradient>
       </View>
       <LinearGradient colors={theme.dock.navigationGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.navigation, { paddingBottom: insets.bottom }]}>
@@ -63,7 +66,7 @@ function DockBody({ state, navigation, insets, hidden }: Props & { hidden: boole
           return <Pressable key={section.name} accessibilityRole="tab" accessibilityLabel={section.title} accessibilityState={{ selected }} aria-selected={selected}
             onPress={() => { if (!route) return; const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true }); if (currentRoute !== section.name && !event.defaultPrevented) navigation.navigate(route.name); }}
             onLongPress={() => { if (route) navigation.emit({ type: 'tabLongPress', target: route.key }); }} style={styles.tab}>
-            <Ionicons name={selected && section.name === 'index' ? 'home' : section.icon} size={theme.size.smallIcon + theme.space.xs} color={selected ? theme.colors.accent : theme.colors.muted} />
+            <Ionicons name={selected ? section.activeIcon : section.icon} size={theme.size.smallIcon + theme.space.xs} color={selected ? theme.colors.accent : theme.colors.muted} />
             <Text style={[styles.tabLabel, selected && styles.activeLabel]}>{section.title}</Text>
           </Pressable>;
         })}
@@ -81,7 +84,11 @@ const createStyles = (theme: Theme) => ({
   details: { flex: 1, minWidth: 0, flexDirection: 'row' as const, alignItems: 'center' as const, gap: theme.space.sm },
   metadata: { flex: 1, minWidth: 0 },
   title: { ...theme.type.action, color: theme.dock.text, fontSize: theme.type.caption.fontSize },
+  activeTitle: { color: theme.colors.accent },
   artist: { ...theme.type.time, color: theme.dock.muted, marginTop: theme.space.xs / 2 },
+  artistRow: { flexDirection: 'row' as const, alignItems: 'center' as const },
+  artistName: { flexShrink: 1, minWidth: 0 },
+  duration: { flexShrink: 0 },
   skip: { width: theme.size.trackControl, height: theme.size.smallControl, alignItems: 'center' as const, justifyContent: 'center' as const },
   disabled: { opacity: theme.opacity.disabled },
   navigation: { overflow: 'hidden' as const },

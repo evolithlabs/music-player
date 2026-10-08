@@ -65,6 +65,29 @@ test('playlist removal persists, removes its links, and preserves songs and othe
   } finally { close(); }
 });
 
+test('song removal persists with playlist cleanup, preserves other songs and listening totals', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'groovio-remove-'));
+  const path = join(directory, 'groovio.db');
+  let connection = open(path);
+  try {
+    await connection.db.saveSongs([song, { ...song, id: 'keep' }]);
+    await connection.db.savePlaylists([{ id: 'mix', name: 'Mix', createdAt: 1, trackIds: ['song', 'keep'] }]);
+    await connection.db.saveListeningEvent({ id: 'session', songId: 'song', startedAt: 1, heardSeconds: 20, position: 20, completed: false });
+    await connection.db.saveDownloads([
+      { serviceUrl: 'one', transfer: 'saved', job: { id: 'remove', status: 'completed' } },
+      { serviceUrl: 'two', transfer: 'saved', job: { id: 'remove', status: 'completed' } },
+      { serviceUrl: 'one', transfer: 'pending', job: { id: 'keep', status: 'queued' } },
+    ]);
+    await connection.db.removeSong('song');
+    await connection.db.removeDownloads('remove');
+    connection.close(); connection = open(path);
+    assert.deepEqual((await connection.db.getSongs()).map((item) => item.id), ['keep']);
+    assert.deepEqual((await connection.db.getPlaylists())[0].trackIds, ['keep']);
+    assert.deepEqual((await connection.db.getDownloads()).map((entry) => entry.job.id), ['keep']);
+    assert.equal((await connection.db.getListeningStats()).heardSeconds, 20);
+  } finally { connection.close(); rmSync(directory, { recursive: true }); }
+});
+
 test('songs, playlist order, download status and preferences survive database reopen', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'groovio-db-'));
   const path = join(directory, 'groovio.db');
